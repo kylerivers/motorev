@@ -1,0 +1,242 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project MotoRev.xcodeproj -scheme MotoRev -configuration Debug build
+
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:iOS, id:dvtdevice-DVTiPhonePlaceholder-iphoneos:placeholder, name:Any iOS Device }
+{ platform:iOS Simulator, id:dvtdevice-DVTiOSDeviceSimulatorPlaceholder-iphonesimulator:placeholder, name:Any iOS Simulator Device }
+{ platform:iOS Simulator, arch:x86_64, id:96BF0559-2AD6-455C-A94D-782A7C5EA30D, OS:18.5, name:iPad (A16) }
+{ platform:iOS Simulator, arch:x86_64, id:A8810FBC-F4EE-4C60-82EF-DF0997A6E861, OS:26.0, name:iPad (A16) }
+{ platform:iOS Simulator, arch:x86_64, id:A53CD301-4A6E-42C4-B41E-AF0697883512, OS:18.5, name:iPad Air 11-inch (M3) }
+{ platform:iOS Simulator, arch:x86_64, id:839D6324-AD19-43D6-8D55-136AE76EDA99, OS:26.0, name:iPad Air 11-inch (M3) }
+{ platform:iOS Simulator, arch:x86_64, id:B2722F4E-083F-4CB0-80F5-1A191CF0CC53, OS:18.5, name:iPad Air 13-inch (M3) }
+{ platform:iOS Simulator, arch:x86_64, id:4E550225-7838-447E-8C0A-A4DE3A1B6C91, OS:26.0, name:iPad Air 13-inch (M3) }
+{ platform:iOS Simulator, arch:x86_64, id:8DD7FA23-8130-4544-8C0D-8E60A98844FA, OS:18.5, name:iPad Pro 11-inch (M4) }
+{ platform:iOS Simulator, arch:x86_64, id:03ABB77D-78F9-423A-A0B1-41BE610175FB, OS:26.0, name:iPad Pro 11-inch (M4) }
+{ platform:iOS Simulator, arch:x86_64, id:95CC5281-7BC5-4E9D-A76A-EB40B35412A7, OS:18.5, name:iPad Pro 13-inch (M4) }
+{ platform:iOS Simulator, arch:x86_64, id:9D5CB395-7EF0-46C0-9855-84B674E91B88, OS:26.0, name:iPad Pro 13-inch (M4) }
+{ platform:iOS Simulator, arch:x86_64, id:E4C7C916-548F-420D-A89A-E3671B12E532, OS:18.5, name:iPad mini (A17 Pro) }
+{ platform:iOS Simulator, arch:x86_64, id:BE12978B-C90B-48CE-B0F7-E0F37D774673, OS:26.0, name:iPad mini (A17 Pro) }
+{ platform:iOS Simulator, arch:x86_64, id:006199F3-2906-493B-9A17-5FC83B6FEF17, OS:18.5, name:iPhone 16 }
+{ platform:iOS Simulator, arch:x86_64, id:B7B9E1EA-0163-411B-AF03-670762D59339, OS:26.0, name:iPhone 16 }
+{ platform:iOS Simulator, arch:x86_64, id:788BB2CA-D2C8-46F1-BD02-93C9DFBE739C, OS:18.5, name:iPhone 16 Plus }
+{ platform:iOS Simulator, arch:x86_64, id:906B2056-0229-4CA1-BC2F-B77BC2CF44AC, OS:26.0, name:iPhone 16 Plus }
+{ platform:iOS Simulator, arch:x86_64, id:E76F4434-483F-4178-8AA1-E10DEC493439, OS:18.5, name:iPhone 16 Pro }
+{ platform:iOS Simulator, arch:x86_64, id:0E60CC17-3185-4512-8AB2-9EAD41935898, OS:26.0, name:iPhone 16 Pro }
+{ platform:iOS Simulator, arch:x86_64, id:09FAB11C-CF13-4D7E-A1B6-D2E494BA9E8C, OS:18.5, name:iPhone 16 Pro Max }
+{ platform:iOS Simulator, arch:x86_64, id:48A88A6C-2A60-4FDD-ADC0-6148057F7B24, OS:26.0, name:iPhone 16 Pro Max }
+{ platform:iOS Simulator, arch:x86_64, id:78623CAC-85C3-49A1-A2AC-55FD29CB678E, OS:18.5, name:iPhone 16e }
+{ platform:iOS Simulator, arch:x86_64, id:13DE1FAB-616B-41FD-AE14-B523D85DBD80, OS:26.0, name:iPhone 16e }
+{ platform:iOS, arch:arm64, id:00008130-00064C9E0C32001C, name:Kyles iPhone }
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (1 target)
+    Target 'MotoRev' in project 'MotoRev' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --print-asset-tag-combinations --output-format xml1 /Users/kylerivers/Desktop/MotoRev/MotoRev/Preview Content/Preview Assets.xcassets /Users/kylerivers/Desktop/MotoRev/MotoRev/Assets.xcassets
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: 98b62adfc57050b9c2cb97c73f3f9145
+Build description path: /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/XCBuildData/98b62adfc57050b9c2cb97c73f3f9145.xcbuilddata
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk /Users/kylerivers/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphoneos18.5-22F76-7fa4eea80a99bbfdc046826b63ec4baf.sdkstatcache
+    cd /Users/kylerivers/Desktop/MotoRev/MotoRev.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk -o /Users/kylerivers/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphoneos18.5-22F76-7fa4eea80a99bbfdc046826b63ec4baf.sdkstatcache
+
+CreateBuildDirectory /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Products
+    cd /Users/kylerivers/Desktop/MotoRev/MotoRev.xcodeproj
+    builtin-create-build-directory /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Products
+
+CreateBuildDirectory /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex
+    cd /Users/kylerivers/Desktop/MotoRev/MotoRev.xcodeproj
+    builtin-create-build-directory /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex
+
+CreateBuildDirectory /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Products/Debug-iphoneos
+    cd /Users/kylerivers/Desktop/MotoRev/MotoRev.xcodeproj
+    builtin-create-build-directory /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Products/Debug-iphoneos
+
+CreateBuildDirectory /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphoneos
+    cd /Users/kylerivers/Desktop/MotoRev/MotoRev.xcodeproj
+    builtin-create-build-directory /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphoneos
+
+WriteAuxiliaryFile /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev-72094e269f3e384857ce8346552dc29d-VFS-iphoneos/all-product-headers.yaml
+    cd /Users/kylerivers/Desktop/MotoRev/MotoRev.xcodeproj
+    write-file /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev-72094e269f3e384857ce8346552dc29d-VFS-iphoneos/all-product-headers.yaml
+
+WriteAuxiliaryFile /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev-DebugDylibPath-normal-arm64.txt (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    write-file /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev-DebugDylibPath-normal-arm64.txt
+
+WriteAuxiliaryFile /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev-generated-files.hmap (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    write-file /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev-generated-files.hmap
+
+WriteAuxiliaryFile /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev-all-non-framework-target-headers.hmap (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    write-file /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev-all-non-framework-target-headers.hmap
+
+WriteAuxiliaryFile /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev.hmap (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    write-file /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev.hmap
+
+WriteAuxiliaryFile /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/empty-MotoRev.plist (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    write-file /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/empty-MotoRev.plist
+
+WriteAuxiliaryFile /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev-all-target-headers.hmap (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    write-file /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev-all-target-headers.hmap
+
+WriteAuxiliaryFile /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev.DependencyStaticMetadataFileList (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    write-file /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev-own-target-headers.hmap (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    write-file /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev-own-target-headers.hmap
+
+WriteAuxiliaryFile /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev-project-headers.hmap (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    write-file /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev-project-headers.hmap
+
+WriteAuxiliaryFile /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev.DependencyMetadataFileList (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    write-file /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev.DependencyMetadataFileList
+
+WriteAuxiliaryFile /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/Objects-normal/arm64/MotoRev.SwiftConstValuesFileList (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    write-file /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/Objects-normal/arm64/MotoRev.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/Objects-normal/arm64/MotoRev_const_extract_protocols.json (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    write-file /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/Objects-normal/arm64/MotoRev_const_extract_protocols.json
+
+WriteAuxiliaryFile /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/Objects-normal/arm64/MotoRev.SwiftFileList (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    write-file /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/Objects-normal/arm64/MotoRev.SwiftFileList
+
+WriteAuxiliaryFile /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/Objects-normal/arm64/MotoRev-OutputFileMap.json (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    write-file /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/Objects-normal/arm64/MotoRev-OutputFileMap.json
+
+WriteAuxiliaryFile /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/Objects-normal/arm64/MotoRev.LinkFileList (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    write-file /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/Objects-normal/arm64/MotoRev.LinkFileList
+
+WriteAuxiliaryFile /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev-DebugDylibInstallName-normal-arm64.txt (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    write-file /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev-DebugDylibInstallName-normal-arm64.txt
+
+MkDir /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Products/Debug-iphoneos/MotoRev.app (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    /bin/mkdir -p /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Products/Debug-iphoneos/MotoRev.app
+
+WriteAuxiliaryFile /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/DerivedSources/Entitlements.plist (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    write-file /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/DerivedSources/Entitlements.plist
+
+ValidateDevelopmentAssets /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    builtin-validate-development-assets --validate YES_ERROR /Users/kylerivers/Desktop/MotoRev/MotoRev/Preview\ Content
+
+ProcessProductPackaging /Users/kylerivers/Library/Developer/Xcode/UserData/Provisioning\ Profiles/ea675f61-5f16-4e66-920f-ce7b330c18e4.mobileprovision /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Products/Debug-iphoneos/MotoRev.app/embedded.mobileprovision (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    builtin-productPackagingUtility /Users/kylerivers/Library/Developer/Xcode/UserData/Provisioning\ Profiles/ea675f61-5f16-4e66-920f-ce7b330c18e4.mobileprovision -o /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Products/Debug-iphoneos/MotoRev.app/embedded.mobileprovision
+
+ProcessProductPackaging "" /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev.app.xcent (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    
+    Entitlements:
+    
+    {
+    "application-identifier" = "CF4YCPU4F2.com.rivers.motorev";
+    "com.apple.developer.team-identifier" = CF4YCPU4F2;
+    "get-task-allow" = 1;
+}
+    
+    builtin-productPackagingUtility -entitlements -format xml -o /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev.app.xcent
+
+ProcessProductPackagingDER /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev.app.xcent /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev.app.xcent.der (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    /usr/bin/derq query -f xml -i /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev.app.xcent -o /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev.app.xcent.der --raw
+
+Ld /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Products/Debug-iphoneos/MotoRev.app/__preview.dylib normal (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios17.0 -dynamiclib -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk -O0 -L/Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Products/Debug-iphoneos -F/Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Products/Debug-iphoneos -install_name @rpath/MotoRev.debug.dylib -dead_strip -rdynamic -Xlinker -no_deduplicate -Xlinker -dependency_info -Xlinker /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/Objects-normal/arm64/MotoRev_dependency_info.dat -Xlinker -no_adhoc_codesign -o /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Products/Debug-iphoneos/MotoRev.app/__preview.dylib
+
+GenerateAssetSymbols /Users/kylerivers/Desktop/MotoRev/MotoRev/Preview\ Content/Preview\ Assets.xcassets /Users/kylerivers/Desktop/MotoRev/MotoRev/Assets.xcassets (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /Users/kylerivers/Desktop/MotoRev/MotoRev/Preview\ Content/Preview\ Assets.xcassets /Users/kylerivers/Desktop/MotoRev/MotoRev/Assets.xcassets --compile /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Products/Debug-iphoneos/MotoRev.app --output-format human-readable-text --notices --warnings --export-dependency-info /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/assetcatalog_dependencies --output-partial-info-plist /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/assetcatalog_generated_info.plist --app-icon AppIcon --accent-color AccentColor --compress-pngs --enable-on-demand-resources YES --development-region en --target-device iphone --target-device ipad --minimum-deployment-target 17.0 --platform iphoneos --bundle-identifier com.rivers.motorev --generate-swift-asset-symbols /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/DerivedSources/GeneratedAssetSymbols.swift --generate-objc-asset-symbols /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/DerivedSources/GeneratedAssetSymbols.h --generate-asset-symbol-index /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/* com.apple.actool.compilation-results */
+/Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/DerivedSources/GeneratedAssetSymbols.h
+/Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/DerivedSources/GeneratedAssetSymbols.swift
+
+
+MkDir /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/assetcatalog_output/thinned (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    /bin/mkdir -p /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/assetcatalog_output/thinned
+
+MkDir /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/assetcatalog_output/unthinned (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    /bin/mkdir -p /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/assetcatalog_output/unthinned
+
+CompileAssetCatalogVariant thinned /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Products/Debug-iphoneos/MotoRev.app /Users/kylerivers/Desktop/MotoRev/MotoRev/Preview\ Content/Preview\ Assets.xcassets /Users/kylerivers/Desktop/MotoRev/MotoRev/Assets.xcassets (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /Users/kylerivers/Desktop/MotoRev/MotoRev/Preview\ Content/Preview\ Assets.xcassets /Users/kylerivers/Desktop/MotoRev/MotoRev/Assets.xcassets --compile /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/assetcatalog_output/thinned --output-format human-readable-text --notices --warnings --export-dependency-info /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/assetcatalog_dependencies_thinned --output-partial-info-plist /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/assetcatalog_generated_info.plist_thinned --app-icon AppIcon --accent-color AccentColor --compress-pngs --enable-on-demand-resources YES --development-region en --target-device iphone --target-device ipad --minimum-deployment-target 17.0 --platform iphoneos
+/* com.apple.actool.document.notices */
+/Users/kylerivers/Desktop/MotoRev/MotoRev/Assets.xcassets:./AppIcon.appiconset/[][ipad][76x76][][][1x][][][][]: notice: 76x76@1x app icons only apply to iPad apps targeting releases of iOS prior to 10.0.
+/* com.apple.actool.compilation-results */
+/Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/assetcatalog_generated_info.plist_thinned
+/Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/assetcatalog_output/thinned/AppIcon60x60@2x.png
+/Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/assetcatalog_output/thinned/AppIcon76x76@2x~ipad.png
+/Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/assetcatalog_output/thinned/Assets.car
+
+
+SwiftDriver MotoRev normal arm64 com.apple.xcode.tools.swift.compiler (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name MotoRev -Onone -enforce-exclusivity\=checked @/Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/Objects-normal/arm64/MotoRev.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk -target arm64-apple-ios17.0 -g -module-cache-path /Users/kylerivers/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Index.noindex/DataStore -swift-version 5 -I /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Products/Debug-iphoneos -F /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Products/Debug-iphoneos -emit-localized-strings -emit-localized-strings-path /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/Objects-normal/arm64 -c -j16 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/kylerivers/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphoneos18.5-22F76-7fa4eea80a99bbfdc046826b63ec4baf.sdkstatcache -output-file-map /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/Objects-normal/arm64/MotoRev-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/Objects-normal/arm64/MotoRev.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/kylerivers/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/Objects-normal/arm64/MotoRev_const_extract_protocols.json -Xcc -iquote -Xcc /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev-generated-files.hmap -Xcc -I/Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev-own-target-headers.hmap -Xcc -I/Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev-all-target-headers.hmap -Xcc -iquote -Xcc /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/MotoRev-project-headers.hmap -Xcc -I/Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Products/Debug-iphoneos/include -Xcc -I/Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/DerivedSources-normal/arm64 -Xcc -I/Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/DerivedSources/arm64 -Xcc -I/Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/kylerivers/Library/Developer/Xcode/DerivedData/MotoRev-eljjjbdrkjqyfgcvkwxknedlmsrz/Build/Intermediates.noindex/MotoRev.build/Debug-iphoneos/MotoRev.build/Objects-normal/arm64/MotoRev-Swift.h -working-directory /Users/kylerivers/Desktop/MotoRev -experimental-emit-module-separately -disable-cmo
+
+SwiftCompile normal arm64 Compiling\ SocialManager.swift,\ WatchManager.swift /Users/kylerivers/Desktop/MotoRev/MotoRev/Managers/SocialManager.swift /Users/kylerivers/Desktop/MotoRev/MotoRev/Managers/WatchManager.swift (in target 'MotoRev' from project 'MotoRev')
+
+SwiftCompile normal arm64 /Users/kylerivers/Desktop/MotoRev/MotoRev/Managers/SocialManager.swift (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    
+
+SwiftCompile normal arm64 /Users/kylerivers/Desktop/MotoRev/MotoRev/Managers/WatchManager.swift (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    
+
+SwiftCompile normal arm64 Compiling\ SafetyManager.swift,\ LocationManager.swift /Users/kylerivers/Desktop/MotoRev/MotoRev/Managers/SafetyManager.swift /Users/kylerivers/Desktop/MotoRev/MotoRev/Managers/LocationManager.swift (in target 'MotoRev' from project 'MotoRev')
+
+SwiftCompile normal arm64 /Users/kylerivers/Desktop/MotoRev/MotoRev/Managers/SafetyManager.swift (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    
+
+SwiftCompile normal arm64 /Users/kylerivers/Desktop/MotoRev/MotoRev/Managers/LocationManager.swift (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    
+
+SwiftCompile normal arm64 Compiling\ MapView.swift /Users/kylerivers/Desktop/MotoRev/MotoRev/Views/MapView.swift (in target 'MotoRev' from project 'MotoRev')
+SwiftCompile normal arm64 /Users/kylerivers/Desktop/MotoRev/MotoRev/Views/MapView.swift (in target 'MotoRev' from project 'MotoRev')
+    cd /Users/kylerivers/Desktop/MotoRev
+    

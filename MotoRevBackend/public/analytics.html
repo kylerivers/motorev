@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MotoRev Analytics Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-tab {
+            padding: 12px 24px;
+            margin: 0 5px;
+            background: transparent;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-tab.active {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-tab:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        .metric-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .metric-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .metric-icon.users { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .metric-icon.content { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .metric-icon.engagement { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .metric-icon.safety { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+        .metric-icon.social { background: linear-gradient(135deg, #fa709a, #fee140); }
+        .metric-icon.riding { background: linear-gradient(135deg, #a8edea, #fed6e3); }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: #718096;
+            font-weight: 500;
+        }
+
+        .metric-change {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .metric-change.positive {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .metric-change.negative {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chart-control {
+            padding: 8px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .chart-control.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+        }
+
+        .table-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .data-table th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 0.9rem;
+        }
+
+        .data-table tr:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .realtime-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: #48bb78;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .realtime-dot {
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+
+        .loading i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #742a2a;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: #667eea;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+
+        .verified-badge {
+            color: #3182ce;
+            margin-left: 5px;
+        }
+
+        .engagement-score {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-badge.online { background: #c6f6d5; color: #22543d; }
+        .status-badge.offline { background: #e2e8f0; color: #4a5568; }
+        .status-badge.riding { background: #fef5e7; color: #c05621; }
+
+        .activity-feed {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 0.9rem;
+        }
+
+        .activity-icon.post { background: #e0e7ff; color: #3730a3; }
+        .activity-icon.like { background: #fce7f3; color: #be185d; }
+        .activity-icon.comment { background: #ecfdf5; color: #166534; }
+        .activity-icon.follow { background: #fff7ed; color: #c2410c; }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-text {
+            font-size: 0.9rem;
+            color: #374151;
+            margin-bottom: 2px;
+        }
+
+        .activity-time {
+            font-size: 0.8rem;
+            color: #9ca3af;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 15px;
+                margin: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .nav-tabs {
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+
+            .nav-tab {
+                padding: 10px 16px;
+                font-size: 0.9rem;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .chart-wrapper {
+                height: 300px;
+            }
+
+            .chart-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1><i class="fas fa-chart-line"></i> MotoRev Analytics</h1>
+            <p>Enterprise Social Platform Intelligence Dashboard</p>
+            <div class="realtime-indicator">
+                <div class="realtime-dot"></div>
+                Live Updates
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" data-tab="overview">
+                <i class="fas fa-tachometer-alt"></i> Overview
+            </button>
+            <button class="nav-tab" data-tab="users">
+                <i class="fas fa-users"></i> Users
+            </button>
+            <button class="nav-tab" data-tab="content">
+                <i class="fas fa-edit"></i> Content
+            </button>
+            <button class="nav-tab" data-tab="engagement">
+                <i class="fas fa-heart"></i> Engagement
+            </button>
+            <button class="nav-tab" data-tab="social">
+                <i class="fas fa-share-alt"></i> Social
+            </button>
+            <button class="nav-tab" data-tab="safety">
+                <i class="fas fa-shield-alt"></i> Safety
+            </button>
+            <button class="nav-tab" data-tab="realtime">
+                <i class="fas fa-broadcast-tower"></i> Real-time
+            </button>
+        </div>
+
+        <!-- Overview Tab -->
+        <div class="tab-content active" data-tab="overview">
+            <div class="metrics-grid" id="overview-metrics">
+                <div class="loading">
+                    <i class="fas fa-spinner"></i>
+                    <p>Loading dashboard metrics...</p>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Platform Growth Trends</h3>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="growthChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Tab -->
+        <div class="tab-content" data-tab="users">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">User Growth</h3>
+                    <div class="chart-controls">
+                        <button class="chart-control active" data-period="7">7 Days</button>
+                        <button class="chart-control" data-period="30">30 Days</button>
+                        <button class="chart-control" data-period="90">90 Days</button>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="userGrowthChart"></canvas>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <h3 class="chart-title">Top Users by Influence</h3>
+                <table class="data-table" id="topUsersTable">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Followers</th>
+                            <th>Posts</th>
+                            <th>Influence Ratio</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="5" class="loading">Loading user data...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Content Tab -->
+        <div class="tab-content" data-tab="content">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Content Engagement Over Time</h3>
+                    <div class="chart-controls">
+                        <button class="chart-control active" data-metric="likes">Likes</button>
+                        <button class="chart-control" data-metric="comments">Comments</button>
+                        <button class="chart-control" data-metric="views">Views</button>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="contentEngagementChart"></canvas>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <h3 class="chart-title">Top Content This Week</h3>
+                <table class="data-table" id="topContentTable">
+                    <thead>
+                        <tr>
+                            <th>Author</th>
+                            <th>Content</th>
+                            <th>Likes</th>
+                            <th>Comments</th>
+                            <th>Engagement Score</th>
+                            <th>Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="6" class="loading">Loading content data...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Engagement Tab -->
+        <div class="tab-content" data-tab="engagement">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">User Activity Patterns</h3>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="activityChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Platform Usage by Device</h3>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="deviceChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Social Tab -->
+        <div class="tab-content" data-tab="social">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Social Network Growth</h3>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="socialGrowthChart"></canvas>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <h3 class="chart-title">Network Influencers</h3>
+                <div id="influencersContent">
+                    <div class="loading">Loading influencer data...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Safety Tab -->
+        <div class="tab-content" data-tab="safety">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Safety Incidents Overview</h3>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="safetyChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-time Tab -->
+        <div class="tab-content" data-tab="realtime">
+            <div class="metrics-grid" id="realtime-metrics">
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <div class="metric-icon online">
+                            <i class="fas fa-circle"></i>
+                        </div>
+                    </div>
+                    <div class="metric-value" id="onlineUsersCount">0</div>
+                    <div class="metric-label">Users Online Now</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Live Activity Feed</h3>
+                </div>
+                <div class="activity-feed" id="activityFeed">
+                    <div class="loading">Loading real-time data...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class AnalyticsDashboard {
+            constructor() {
+                this.charts = {};
+                this.data = {};
+                this.activeTab = 'overview';
+                this.updateInterval = null;
+                
+                this.init();
+            }
+
+            async init() {
+                this.setupEventListeners();
+                await this.loadDashboardData();
+                this.startRealTimeUpdates();
+            }
+
+            setupEventListeners() {
+                // Tab navigation
+                document.querySelectorAll('.nav-tab').forEach(tab => {
+                    tab.addEventListener('click', (e) => {
+                        this.switchTab(e.target.dataset.tab);
+                    });
+                });
+
+                // Chart controls
+                document.querySelectorAll('.chart-control').forEach(control => {
+                    control.addEventListener('click', (e) => {
+                        this.handleChartControl(e.target);
+                    });
+                });
+            }
+
+            switchTab(tabName) {
+                // Update active tab
+                document.querySelectorAll('.nav-tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+                // Show/hide content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.querySelector(`.tab-content[data-tab="${tabName}"]`).classList.add('active');
+
+                this.activeTab = tabName;
+                this.loadTabData(tabName);
+            }
+
+            async loadDashboardData() {
+                try {
+                    const response = await fetch('/api/analytics/dashboard');
+                    if (!response.ok) throw new Error('Failed to fetch dashboard data');
+                    
+                    this.data.dashboard = await response.json();
+                    this.renderOverviewMetrics();
+                    this.createGrowthChart();
+                } catch (error) {
+                    console.error('Error loading dashboard data:', error);
+                    this.showError('Failed to load dashboard data');
+                }
+            }
+
+            async loadTabData(tabName) {
+                switch (tabName) {
+                    case 'users':
+                        await this.loadUserData();
+                        break;
+                    case 'content':
+                        await this.loadContentData();
+                        break;
+                    case 'engagement':
+                        await this.loadEngagementData();
+                        break;
+                    case 'social':
+                        await this.loadSocialData();
+                        break;
+                    case 'safety':
+                        await this.loadSafetyData();
+                        break;
+                    case 'realtime':
+                        await this.loadRealTimeData();
+                        break;
+                }
+            }
+
+            renderOverviewMetrics() {
+                const { users, content, engagement, safety, social, riding } = this.data.dashboard;
+                
+                const metricsHTML = `
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon users">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="metric-change positive">+${users.new_users_week || 0} this week</div>
+                        </div>
+                        <div class="metric-value">${(users.total_users || 0).toLocaleString()}</div>
+                        <div class="metric-label">Total Users</div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon content">
+                                <i class="fas fa-edit"></i>
+                            </div>
+                            <div class="metric-change positive">+${content.posts_today || 0} today</div>
+                        </div>
+                        <div class="metric-value">${(content.total_posts || 0).toLocaleString()}</div>
+                        <div class="metric-label">Total Posts</div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon engagement">
+                                <i class="fas fa-heart"></i>
+                            </div>
+                            <div class="metric-change positive">${parseFloat(content.avg_likes_per_post || 0).toFixed(1)} avg</div>
+                        </div>
+                        <div class="metric-value">${(content.total_likes || 0).toLocaleString()}</div>
+                        <div class="metric-label">Total Likes</div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon social">
+                                <i class="fas fa-share-alt"></i>
+                            </div>
+                            <div class="metric-change positive">+${social.new_follows_week || 0} this week</div>
+                        </div>
+                        <div class="metric-value">${(social.total_follows || 0).toLocaleString()}</div>
+                        <div class="metric-label">Total Follows</div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon safety">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="metric-change ${safety.active_emergencies > 0 ? 'negative' : 'positive'}">
+                                ${safety.active_emergencies || 0} active
+                            </div>
+                        </div>
+                        <div class="metric-value">${Math.round(safety.avg_response_time || 0)}</div>
+                        <div class="metric-label">Avg Response Time (min)</div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon riding">
+                                <i class="fas fa-motorcycle"></i>
+                            </div>
+                            <div class="metric-change positive">+${riding.rides_week || 0} this week</div>
+                        </div>
+                        <div class="metric-value">${(riding.total_miles || 0).toLocaleString()}</div>
+                        <div class="metric-label">Total Miles Ridden</div>
+                    </div>
+                `;
+                
+                document.getElementById('overview-metrics').innerHTML = metricsHTML;
+            }
+
+            async loadUserData() {
+                try {
+                    const [growthResponse, socialResponse] = await Promise.all([
+                        fetch('/api/analytics/users/growth?period=30'),
+                        fetch('/api/analytics/social/network')
+                    ]);
+                    
+                    const growthData = await growthResponse.json();
+                    const socialData = await socialResponse.json();
+                    
+                    this.createUserGrowthChart(growthData);
+                    this.renderTopUsersTable(socialData.top_influencers);
+                } catch (error) {
+                    console.error('Error loading user data:', error);
+                }
+            }
+
+            async loadContentData() {
+                try {
+                    const [engagementResponse, topContentResponse] = await Promise.all([
+                        fetch('/api/analytics/content/engagement?period=7'),
+                        fetch('/api/analytics/content/top?period=7&limit=10')
+                    ]);
+                    
+                    const engagementData = await engagementResponse.json();
+                    const topContentData = await topContentResponse.json();
+                    
+                    this.createContentEngagementChart(engagementData);
+                    this.renderTopContentTable(topContentData);
+                } catch (error) {
+                    console.error('Error loading content data:', error);
+                }
+            }
+
+            async loadRealTimeData() {
+                try {
+                    const response = await fetch('/api/analytics/realtime/feed');
+                    const data = await response.json();
+                    
+                    document.getElementById('onlineUsersCount').textContent = data.online_users;
+                    this.renderActivityFeed(data.recent_events);
+                } catch (error) {
+                    console.error('Error loading real-time data:', error);
+                }
+            }
+
+            createGrowthChart() {
+                const ctx = document.getElementById('growthChart').getContext('2d');
+                
+                // Sample data - replace with actual data
+                const data = {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Users',
+                        data: [12, 19, 25, 35, 45, 52],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }, {
+                        label: 'Posts',
+                        data: [5, 12, 18, 28, 38, 45],
+                        borderColor: '#f093fb',
+                        backgroundColor: 'rgba(240, 147, 251, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                };
+
+                this.charts.growth = new Chart(ctx, {
+                    type: 'line',
+                    data: data,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            renderTopUsersTable(users) {
+                if (!users || users.length === 0) {
+                    document.querySelector('#topUsersTable tbody').innerHTML = 
+                        '<tr><td colspan="5" class="loading">No user data available</td></tr>';
+                    return;
+                }
+
+                const tbody = document.querySelector('#topUsersTable tbody');
+                tbody.innerHTML = users.map(user => `
+                    <tr>
+                        <td>
+                            <div style="display: flex; align-items: center;">
+                                <div class="user-avatar">${user.username.charAt(0).toUpperCase()}</div>
+                                <span>${user.username}</span>
+                                ${user.is_verified ? '<i class="fas fa-check-circle verified-badge"></i>' : ''}
+                            </div>
+                        </td>
+                        <td>${user.followers_count.toLocaleString()}</td>
+                        <td>${user.posts_count.toLocaleString()}</td>
+                        <td><span class="engagement-score">${user.influence_ratio || 'N/A'}</span></td>
+                        <td><span class="status-badge online">Active</span></td>
+                    </tr>
+                `).join('');
+            }
+
+            renderTopContentTable(content) {
+                if (!content || content.length === 0) {
+                    document.querySelector('#topContentTable tbody').innerHTML = 
+                        '<tr><td colspan="6" class="loading">No content data available</td></tr>';
+                    return;
+                }
+
+                const tbody = document.querySelector('#topContentTable tbody');
+                tbody.innerHTML = content.map(post => `
+                    <tr>
+                        <td>
+                            <div style="display: flex; align-items: center;">
+                                <div class="user-avatar">${post.username.charAt(0).toUpperCase()}</div>
+                                <span>${post.username}</span>
+                                ${post.is_verified ? '<i class="fas fa-check-circle verified-badge"></i>' : ''}
+                            </div>
+                        </td>
+                        <td>${post.content.substring(0, 50)}${post.content.length > 50 ? '...' : ''}</td>
+                        <td>${post.likes_count.toLocaleString()}</td>
+                        <td>${post.comments_count.toLocaleString()}</td>
+                        <td><span class="engagement-score">${Math.round(post.engagement_score)}</span></td>
+                        <td>${new Date(post.created_at).toLocaleDateString()}</td>
+                    </tr>
+                `).join('');
+            }
+
+            renderActivityFeed(events) {
+                if (!events || events.length === 0) {
+                    document.getElementById('activityFeed').innerHTML = 
+                        '<div class="loading">No recent activity</div>';
+                    return;
+                }
+
+                const activityHTML = events.map(event => {
+                    const iconClass = this.getActivityIcon(event.event_type);
+                    const timeAgo = this.getTimeAgo(new Date(event.timestamp));
+                    
+                    return `
+                        <div class="activity-item">
+                            <div class="activity-icon ${event.event_category}">
+                                <i class="fas ${iconClass}"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-text">
+                                    <strong>${event.username || 'Anonymous'}</strong> ${this.getActivityText(event.event_type)}
+                                    <span class="status-badge ${event.device_type}">${event.device_type}</span>
+                                </div>
+                                <div class="activity-time">${timeAgo}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                document.getElementById('activityFeed').innerHTML = activityHTML;
+            }
+
+            getActivityIcon(eventType) {
+                const icons = {
+                    'post_create': 'fa-edit',
+                    'post_like': 'fa-heart',
+                    'post_view': 'fa-eye',
+                    'comment_create': 'fa-comment',
+                    'app_open': 'fa-mobile-alt',
+                    'ride_start': 'fa-motorcycle',
+                    'social_follow': 'fa-user-plus',
+                    'profile_view': 'fa-user',
+                    'hazard_report': 'fa-exclamation-triangle'
+                };
+                return icons[eventType] || 'fa-circle';
+            }
+
+            getActivityText(eventType) {
+                const texts = {
+                    'post_create': 'created a new post',
+                    'post_like': 'liked a post',
+                    'post_view': 'viewed a post',
+                    'comment_create': 'commented on a post',
+                    'app_open': 'opened the app',
+                    'ride_start': 'started a ride',
+                    'social_follow': 'followed another user',
+                    'profile_view': 'viewed a profile',
+                    'hazard_report': 'reported a hazard'
+                };
+                return texts[eventType] || 'performed an action';
+            }
+
+            getTimeAgo(date) {
+                const now = new Date();
+                const diff = now - date;
+                const minutes = Math.floor(diff / 60000);
+                
+                if (minutes < 1) return 'Just now';
+                if (minutes < 60) return `${minutes}m ago`;
+                
+                const hours = Math.floor(minutes / 60);
+                if (hours < 24) return `${hours}h ago`;
+                
+                const days = Math.floor(hours / 24);
+                return `${days}d ago`;
+            }
+
+            startRealTimeUpdates() {
+                // Update real-time data every 30 seconds
+                this.updateInterval = setInterval(() => {
+                    if (this.activeTab === 'realtime') {
+                        this.loadRealTimeData();
+                    }
+                }, 30000);
+
+                // Update dashboard metrics every 5 minutes
+                setInterval(() => {
+                    if (this.activeTab === 'overview') {
+                        this.loadDashboardData();
+                    }
+                }, 300000);
+            }
+
+            showError(message) {
+                const errorHTML = `<div class="error"><i class="fas fa-exclamation-triangle"></i> ${message}</div>`;
+                document.getElementById('overview-metrics').innerHTML = errorHTML;
+            }
+
+            handleChartControl(control) {
+                // Update active control
+                control.parentElement.querySelectorAll('.chart-control').forEach(c => {
+                    c.classList.remove('active');
+                });
+                control.classList.add('active');
+
+                // Handle the control action based on data attributes
+                const period = control.dataset.period;
+                const metric = control.dataset.metric;
+                
+                if (period) {
+                    this.loadUserData(period);
+                }
+                
+                if (metric) {
+                    this.updateContentChart(metric);
+                }
+            }
+        }
+
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new AnalyticsDashboard();
+        });
+    </script>
+</body>
+</html> 

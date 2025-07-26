@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MotoRev Database - Basic</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        button { padding: 10px 20px; margin: 5px; font-size: 16px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .result { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>🏍️ MotoRev Database (Basic)</h1>
+    
+    <button onclick="showUsers()">Show Users</button>
+    <button onclick="showPosts()">Show Posts</button>
+    <button onclick="showRides()">Show Rides</button>
+    <button onclick="showStats()">Show Stats</button>
+    
+    <div id="result" class="result">
+        <p>Click a button above to view data</p>
+    </div>
+
+    <script>
+        function showUsers() {
+            document.getElementById('result').innerHTML = 'Loading users...';
+            fetch('/api/admin/table/users')
+                .then(response => response.json())
+                .then(data => {
+                    let html = '<h2>Users (' + data.rows.length + ')</h2><table><tr>';
+                    Object.keys(data.rows[0]).forEach(key => html += '<th>' + key + '</th>');
+                    html += '</tr>';
+                    data.rows.slice(0, 10).forEach(row => {
+                        html += '<tr>';
+                        Object.values(row).forEach(val => {
+                            let v = val === null ? 'null' : String(val);
+                            if (v.length > 30) v = v.substring(0, 30) + '...';
+                            html += '<td>' + v + '</td>';
+                        });
+                        html += '</tr>';
+                    });
+                    html += '</table>';
+                    document.getElementById('result').innerHTML = html;
+                })
+                .catch(err => {
+                    document.getElementById('result').innerHTML = 'Error: ' + err.message;
+                });
+        }
+        
+        function showPosts() {
+            document.getElementById('result').innerHTML = 'Loading posts...';
+            fetch('/api/admin/table/posts')
+                .then(response => response.json())
+                .then(data => {
+                    let html = '<h2>Posts (' + data.rows.length + ')</h2><table><tr>';
+                    Object.keys(data.rows[0]).forEach(key => html += '<th>' + key + '</th>');
+                    html += '</tr>';
+                    data.rows.slice(0, 10).forEach(row => {
+                        html += '<tr>';
+                        Object.values(row).forEach(val => {
+                            let v = val === null ? 'null' : String(val);
+                            if (v.length > 30) v = v.substring(0, 30) + '...';
+                            html += '<td>' + v + '</td>';
+                        });
+                        html += '</tr>';
+                    });
+                    html += '</table>';
+                    document.getElementById('result').innerHTML = html;
+                })
+                .catch(err => {
+                    document.getElementById('result').innerHTML = 'Error: ' + err.message;
+                });
+        }
+        
+        function showRides() {
+            document.getElementById('result').innerHTML = 'Loading rides...';
+            fetch('/api/admin/table/rides')
+                .then(response => response.json())
+                .then(data => {
+                    let html = '<h2>Rides (' + data.rows.length + ')</h2><table><tr>';
+                    Object.keys(data.rows[0]).forEach(key => html += '<th>' + key + '</th>');
+                    html += '</tr>';
+                    data.rows.slice(0, 10).forEach(row => {
+                        html += '<tr>';
+                        Object.values(row).forEach(val => {
+                            let v = val === null ? 'null' : String(val);
+                            if (v.length > 30) v = v.substring(0, 30) + '...';
+                            html += '<td>' + v + '</td>';
+                        });
+                        html += '</tr>';
+                    });
+                    html += '</table>';
+                    document.getElementById('result').innerHTML = html;
+                })
+                .catch(err => {
+                    document.getElementById('result').innerHTML = 'Error: ' + err.message;
+                });
+        }
+        
+        function showStats() {
+            document.getElementById('result').innerHTML = 'Loading stats...';
+            fetch('/api/admin/stats')
+                .then(response => response.json())
+                .then(data => {
+                    let html = '<h2>Database Statistics</h2>';
+                    Object.entries(data).forEach(([key, value]) => {
+                        html += '<p><strong>' + key + ':</strong> ' + value + '</p>';
+                    });
+                    document.getElementById('result').innerHTML = html;
+                })
+                .catch(err => {
+                    document.getElementById('result').innerHTML = 'Error: ' + err.message;
+                });
+        }
+    </script>
+</body>
+</html> 

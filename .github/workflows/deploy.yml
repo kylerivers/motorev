@@ -1,0 +1,37 @@
+name: Deploy to Railway
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: MotoRevBackend/package-lock.json
+          
+      - name: Install dependencies
+        working-directory: MotoRevBackend
+        run: npm ci
+        
+      - name: Deploy to Railway
+        uses: railway/action@v1
+        with:
+          railway_token: ${{ secrets.RAILWAY_TOKEN }}
+          service: motorev-backend
+          
+      - name: Notify deployment
+        run: |
+          echo "🚀 MotoRev Backend deployed successfully!"
+          echo "🌐 Production URL: https://motorev-backend-production.up.railway.app"
+          echo "📊 Dashboard: https://railway.app/dashboard" 

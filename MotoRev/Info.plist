@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>$(DEVELOPMENT_LANGUAGE)</string>
+    <key>CFBundleDisplayName</key>
+    <string>MotoRev</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+    <key>UIApplicationSceneManifest</key>
+    <dict>
+        <key>UIApplicationSupportsMultipleScenes</key>
+        <true/>
+    </dict>
+    <key>UIApplicationSupportsIndirectInputEvents</key>
+    <true/>
+    <key>UILaunchScreen</key>
+    <dict/>
+    <key>UIRequiredDeviceCapabilities</key>
+    <array>
+        <string>armv7</string>
+        <string>gps</string>
+        <string>accelerometer</string>
+        <string>gyroscope</string>
+        <string>magnetometer</string>
+    </array>
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>MotoRev needs access to your location to track rides, provide safety features, and connect you with nearby riders.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>MotoRev needs access to your location to track rides, provide safety features, and connect you with nearby riders.</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>MotoRev needs access to your location to provide safety features and crash detection even when the app is in the background.</string>
+    <key>NSMotionUsageDescription</key>
+    <string>MotoRev uses motion sensors to detect crashes and provide safety features while riding.</string>
+    <key>NSContactsUsageDescription</key>
+    <string>MotoRev needs access to your contacts to add emergency contacts for safety features.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>MotoRev needs access to your camera to take photos of your rides to share with the community.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>MotoRev needs access to your photo library to share photos of your rides with the community.</string>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>MotoRev uses Bluetooth to connect with your Apple Watch and other compatible devices.</string>
+    <key>NSBluetoothPeripheralUsageDescription</key>
+    <string>MotoRev uses Bluetooth to connect with your Apple Watch and other compatible devices.</string>
+    <key>NSHealthShareUsageDescription</key>
+    <string>MotoRev can share your ride data with Apple Health to track your fitness activities.</string>
+    <key>NSHealthUpdateUsageDescription</key>
+    <string>MotoRev can update your Apple Health data with ride information and fitness metrics.</string>
+    <key>NSUserNotificationsUsageDescription</key>
+    <string>MotoRev sends notifications for safety alerts, ride reminders, and social updates.</string>
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>location</string>
+        <string>background-processing</string>
+        <string>background-fetch</string>
+        <string>audio</string>
+    </array>
+    <key>WKWatchKitApp</key>
+    <false/>
+    <key>WKCompanionAppBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <false/>
+        <key>NSExceptionDomains</key>
+        <dict>
+            <key>localhost</key>
+            <dict>
+                <key>NSExceptionAllowsInsecureHTTPLoads</key>
+                <true/>
+            </dict>
+        </dict>
+    </dict>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.social-networking</string>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>com.motorev.deeplink</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>motorev</string>
+            </array>
+        </dict>
+    </array>
+    <key>UIStatusBarStyle</key>
+    <string>UIStatusBarStyleDefault</string>
+    <key>UIViewControllerBasedStatusBarAppearance</key>
+    <false/>
+    <key>NSSupportsLiveActivities</key>
+    <true/>
+    <key>NSSupportsLiveActivitiesFrequentUpdates</key>
+    <true/>
+</dict>
+</plist> 

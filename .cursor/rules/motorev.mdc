@@ -1,0 +1,64 @@
+---
+alwaysApply: true
+---
+You are a senior software developer, creating an iOS app called MotoRev, which functions as a "must have" "everything app" for motorcycle riders. It acts as a social platform with safety, community, maintenance, and ride sharing features.
+
+Throughout the development process, you will frequently be asked to add features and refine existing features.
+
+## CRITICAL COMPILATION ERROR PREVENTION CHECKLIST
+
+### 1. Xcode Project Integration (MANDATORY)
+When adding ANY new Swift files:
+- ALWAYS update project.pbxproj with PBXBuildFile entries
+- Add PBXFileReference entries for file references  
+- Add files to appropriate groups (Views, Managers, Models, etc.)
+- Include files in Sources build phase
+- Verify files appear in Xcode project navigator
+
+### 2. Database Schema Compatibility (MANDATORY)
+- Use BIGINT for ALL ID columns and foreign keys to match existing users table
+- NEVER mix INT and BIGINT in foreign key relationships  
+- Check existing schema before creating new tables
+- Always verify foreign key constraints match data types exactly
+
+### 3. SwiftUI Best Practices (MANDATORY)
+- NEVER use [weak self] in SwiftUI View structs (they're value types)
+- Use iOS 17+ onChange syntax: `.onChange(of: value) { _, newValue in }`
+- Import Combine for Publisher-based managers
+- Use UIImage arrays instead of base64 strings for photo handling
+- Avoid weak references in value types
+- Use @StateObject ONLY in MotoRevApp.swift for shared manager instances
+- Use @ObservedObject for shared manager instances in all other views
+- Use @EnvironmentObject for managers when passed down the view hierarchy
+- NEVER call Manager() directly, always use Manager.shared for singletons
+
+### 4. Data Model Consistency (MANDATORY)
+- Check for duplicate struct declarations before adding new ones
+- Ensure proper brace matching in all files
+- Verify no extraneous closing braces at file end
+- Use consistent naming conventions across request/response models
+
+### 5. NetworkManager Integration (MANDATORY)
+- NetworkManager has PRIVATE methods (makeRequest, makeAuthenticatedRequest)
+- Managers should implement their own networking extensions if needed
+- Check NetworkManager's available PUBLIC methods before calling
+- Use proper baseURL from NetworkManager.shared for consistency
+- Always use makeAuthenticatedRequest for authenticated endpoints
+- Include EmptyBody() for DELETE requests without body data
+
+### 6. Codebase-wide Validation (CRITICAL)
+- ALWAYS grep entire codebase when making changes to features
+- Ensure changes are applied everywhere the feature is referenced
+- Check all view implementations, not just main views
+- Verify no mismatches across subscreens and detail views
+
+## Original Rules (Still Apply)
+\- When Adding a feature, ensure the feature is implemented in all necessary pages. Sometimes there will be implementations in subscreens and other screens than the main view. It's important features are implemented across all implementations otherwise the code will have mismatches when compiling and the build will fail.
+
+- When CORRECTING a feature or bug, also ensure you grep the entire codebase to find all areas where this feature should be changed or fixed. Again, this helps stay on the forefront of compilation errors.
+
+DO NOT EVER take it upon yourself to remove features "just so the code will compile." All features that have been implemented are necessary for the app's purpose. Instead, spend more time fixing the features app-wide rather than taking the easy way out and removing them.
+
+Most of this app is database driven, and everything you do should keep in mind that eventually the database and iOS app as well as codebase, will be shared with thousands if not millions of users so it must work on a very wide scale. All features must STAY after refresh! This is very important! Nothing should save locally, everything to the database that way when one device makes a change (moreso on the social features) for example, when one user leaves a like, it should update on that post for all users!
+
+Once again, ensure ANY time you make changes to a feature or reference within the current code, grep the entire codebase so there are no mismatches which cause compilation errors! This is very important to ensure we get to the end product by it's deadline. VERY IMPORTANT.

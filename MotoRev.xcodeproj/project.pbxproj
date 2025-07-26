@@ -1,0 +1,510 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		2A1111111111AAAA /* MotoRevApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAAB /* MotoRevApp.swift */; };
+		2A1111111111AAAC /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAAD /* ContentView.swift */; };
+		2A1111111111AAAE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAAF /* Assets.xcassets */; };
+		2A1111111111AAB1 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAB0 /* Preview Assets.xcassets */; };
+		2A1111111111AAB2 /* DataModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAB3 /* DataModels.swift */; };
+		2A1111111111AAB4 /* SafetyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAB5 /* SafetyManager.swift */; };
+		2A1111111111AAB6 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAB7 /* LocationManager.swift */; };
+		2A1111111111AAB8 /* SocialManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAB9 /* SocialManager.swift */; };
+		2A1111111111AABA /* WatchManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AABB /* WatchManager.swift */; };
+		2A1111111111AABC /* SocialFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AABD /* SocialFeedView.swift */; };
+		2A1111111111AABE /* MapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AABF /* MapView.swift */; };
+		2A1111111111AAC0 /* LeaderboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAC1 /* LeaderboardView.swift */; };
+		2A1111111111AAC2 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAC3 /* ProfileView.swift */; };
+		2A1111111111AAC4 /* SafetyStatusOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAC5 /* SafetyStatusOverlay.swift */; };
+		2A1111111111AAD0 /* CrashDetectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAD1 /* CrashDetectionManager.swift */; };
+		2A1111111111AAD2 /* LocationSharingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAD3 /* LocationSharingManager.swift */; };
+		2A1111111111AAD4 /* HazardDetectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAD5 /* HazardDetectionManager.swift */; };
+		2A1111111111AAD6 /* RideHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAD7 /* RideHubView.swift */; };
+		2A1111111111AAD8 /* EmergencyResponseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAD9 /* EmergencyResponseView.swift */; };
+		2A1111111111AADA /* ICEScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AADB /* ICEScreenView.swift */; };
+		2A1111111111AADC /* NetworkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AADD /* NetworkManager.swift */; };
+		2A1111111111AADE /* AuthenticationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AADF /* AuthenticationView.swift */; };
+		2A1111111111AAE0 /* DigitalGarageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAE1 /* DigitalGarageView.swift */; };
+		2A1111111111AAE2 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAE3 /* SearchView.swift */; };
+		2A1111111111AAE4 /* BikeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAE5 /* BikeManager.swift */; };
+		2A1111111111AAE6 /* AddEditBikeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAE7 /* AddEditBikeView.swift */; };
+		2A1111111111AAE8 /* BikeDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAE9 /* BikeDetailView.swift */; };
+		2A1111111111AAEA /* MaintenanceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAEB /* MaintenanceView.swift */; };
+		2A1111111111AAEC /* AddEditMaintenanceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAED /* AddEditMaintenanceView.swift */; };
+		2A1111111111AAEE /* RideNavigationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAEF /* RideNavigationView.swift */; };
+		2A1111111111AAF0 /* GroupRideManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAF1 /* GroupRideManager.swift */; };
+		2A1111111111AAF2 /* WeatherManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAF3 /* WeatherManager.swift */; };
+		2A1111111111AAF4 /* WeatherAlertsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAF5 /* WeatherAlertsView.swift */; };
+		2A1111111111AAF6 /* FuelFinderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAF7 /* FuelFinderView.swift */; };
+		2A1111111111AAF8 /* AddModificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAF9 /* AddModificationView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		2A1111111111AAA8 /* MotoRev.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MotoRev.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2A1111111111AAAB /* MotoRevApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotoRevApp.swift; sourceTree = "<group>"; };
+		2A1111111111AAAD /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		2A1111111111AAAF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		2A1111111111AAB0 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		2A1111111111AAB3 /* DataModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataModels.swift; sourceTree = "<group>"; };
+		2A1111111111AAB5 /* SafetyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafetyManager.swift; sourceTree = "<group>"; };
+		2A1111111111AAB7 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
+		2A1111111111AAB9 /* SocialManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialManager.swift; sourceTree = "<group>"; };
+		2A1111111111AABB /* WatchManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchManager.swift; sourceTree = "<group>"; };
+		2A1111111111AABD /* SocialFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialFeedView.swift; sourceTree = "<group>"; };
+		2A1111111111AABF /* MapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapView.swift; sourceTree = "<group>"; };
+		2A1111111111AAC1 /* LeaderboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardView.swift; sourceTree = "<group>"; };
+		2A1111111111AAC3 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		2A1111111111AAC5 /* SafetyStatusOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafetyStatusOverlay.swift; sourceTree = "<group>"; };
+		2A1111111111AAD1 /* CrashDetectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashDetectionManager.swift; sourceTree = "<group>"; };
+		2A1111111111AAD3 /* LocationSharingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationSharingManager.swift; sourceTree = "<group>"; };
+		2A1111111111AAD5 /* HazardDetectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HazardDetectionManager.swift; sourceTree = "<group>"; };
+		2A1111111111AAD7 /* RideHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideHubView.swift; sourceTree = "<group>"; };
+		2A1111111111AAD9 /* EmergencyResponseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmergencyResponseView.swift; sourceTree = "<group>"; };
+		2A1111111111AADB /* ICEScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ICEScreenView.swift; sourceTree = "<group>"; };
+		2A1111111111AADD /* NetworkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkManager.swift; sourceTree = "<group>"; };
+		2A1111111111AADF /* AuthenticationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationView.swift; sourceTree = "<group>"; };
+		2A1111111111AAE1 /* DigitalGarageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DigitalGarageView.swift; sourceTree = "<group>"; };
+		2A1111111111AAE3 /* SearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchView.swift; sourceTree = "<group>"; };
+		2A1111111111AAE5 /* BikeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeManager.swift; sourceTree = "<group>"; };
+		2A1111111111AAE7 /* AddEditBikeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddEditBikeView.swift; sourceTree = "<group>"; };
+		2A1111111111AAE9 /* BikeDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeDetailView.swift; sourceTree = "<group>"; };
+		2A1111111111AAEB /* MaintenanceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaintenanceView.swift; sourceTree = "<group>"; };
+		2A1111111111AAED /* AddEditMaintenanceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddEditMaintenanceView.swift; sourceTree = "<group>"; };
+		2A1111111111AAEF /* RideNavigationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideNavigationView.swift; sourceTree = "<group>"; };
+		2A1111111111AAF1 /* GroupRideManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupRideManager.swift; sourceTree = "<group>"; };
+		2A1111111111AAF3 /* WeatherManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherManager.swift; sourceTree = "<group>"; };
+		2A1111111111AAF5 /* WeatherAlertsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherAlertsView.swift; sourceTree = "<group>"; };
+		2A1111111111AAF7 /* FuelFinderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelFinderView.swift; sourceTree = "<group>"; };
+		2A1111111111AAF9 /* AddModificationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddModificationView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		2A1111111111AAA5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		2A111111111199FF = {
+			isa = PBXGroup;
+			children = (
+				2A1111111111AAA9 /* MotoRev */,
+				2A1111111111AAA7 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		2A1111111111AAA7 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				2A1111111111AAA8 /* MotoRev.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		2A1111111111AAA9 /* MotoRev */ = {
+			isa = PBXGroup;
+			children = (
+				2A1111111111AAAB /* MotoRevApp.swift */,
+				2A1111111111AAAD /* ContentView.swift */,
+				2A1111111111AAC6 /* Models */,
+				2A1111111111AAC7 /* Managers */,
+				2A1111111111AAC8 /* Views */,
+				2A1111111111AAAF /* Assets.xcassets */,
+				2A1111111111AAC9 /* Preview Content */,
+			);
+			path = MotoRev;
+			sourceTree = "<group>";
+		};
+		2A1111111111AAC6 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				2A1111111111AAB3 /* DataModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		2A1111111111AAC7 /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+				2A1111111111AAB5 /* SafetyManager.swift */,
+				2A1111111111AAB7 /* LocationManager.swift */,
+				2A1111111111AAB9 /* SocialManager.swift */,
+				2A1111111111AADD /* NetworkManager.swift */,
+				2A1111111111AABB /* WatchManager.swift */,
+				2A1111111111AAD1 /* CrashDetectionManager.swift */,
+				2A1111111111AAD3 /* LocationSharingManager.swift */,
+				2A1111111111AAD5 /* HazardDetectionManager.swift */,
+				2A1111111111AAE5 /* BikeManager.swift */,
+				2A1111111111AAF1 /* GroupRideManager.swift */,
+				2A1111111111AAF3 /* WeatherManager.swift */,
+			);
+			path = Managers;
+			sourceTree = "<group>";
+		};
+		2A1111111111AAC8 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				2A1111111111AABD /* SocialFeedView.swift */,
+				2A1111111111AABF /* MapView.swift */,
+				2A1111111111AAC1 /* LeaderboardView.swift */,
+				2A1111111111AAC3 /* ProfileView.swift */,
+				2A1111111111AAC5 /* SafetyStatusOverlay.swift */,
+				2A1111111111AAD7 /* RideHubView.swift */,
+				2A1111111111AAD9 /* EmergencyResponseView.swift */,
+				2A1111111111AADB /* ICEScreenView.swift */,
+				2A1111111111AADF /* AuthenticationView.swift */,
+				2A1111111111AAE1 /* DigitalGarageView.swift */,
+				2A1111111111AAE3 /* SearchView.swift */,
+				2A1111111111AAE7 /* AddEditBikeView.swift */,
+				2A1111111111AAE9 /* BikeDetailView.swift */,
+				2A1111111111AAEB /* MaintenanceView.swift */,
+				2A1111111111AAED /* AddEditMaintenanceView.swift */,
+				2A1111111111AAEF /* RideNavigationView.swift */,
+				2A1111111111AAF5 /* WeatherAlertsView.swift */,
+				2A1111111111AAF7 /* FuelFinderView.swift */,
+				2A1111111111AAF9 /* AddModificationView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		2A1111111111AAC9 /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				2A1111111111AAB0 /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		2A1111111111AAA6 /* MotoRev */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2A1111111111AACA /* Build configuration list for PBXNativeTarget "MotoRev" */;
+			buildPhases = (
+				2A1111111111AAA3 /* Sources */,
+				2A1111111111AAA5 /* Frameworks */,
+				2A1111111111AAA4 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MotoRev;
+			productName = MotoRev;
+			productReference = 2A1111111111AAA8 /* MotoRev.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		2A111111111199FE /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					2A1111111111AAA6 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = 2A111111111199FA /* Build configuration list for PBXProject "MotoRev" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 2A111111111199FF;
+			productRefGroup = 2A1111111111AAA7 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				2A1111111111AAA6 /* MotoRev */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		2A1111111111AAA4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2A1111111111AAB1 /* Preview Assets.xcassets in Resources */,
+				2A1111111111AAAE /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		2A1111111111AAA3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2A1111111111AAAC /* ContentView.swift in Sources */,
+				2A1111111111AAB2 /* DataModels.swift in Sources */,
+				2A1111111111AAB4 /* SafetyManager.swift in Sources */,
+				2A1111111111AAB6 /* LocationManager.swift in Sources */,
+				2A1111111111AAB8 /* SocialManager.swift in Sources */,
+				2A1111111111AADC /* NetworkManager.swift in Sources */,
+				2A1111111111AABA /* WatchManager.swift in Sources */,
+				2A1111111111AABC /* SocialFeedView.swift in Sources */,
+				2A1111111111AABE /* MapView.swift in Sources */,
+				2A1111111111AAC0 /* LeaderboardView.swift in Sources */,
+				2A1111111111AAC2 /* ProfileView.swift in Sources */,
+				2A1111111111AAC4 /* SafetyStatusOverlay.swift in Sources */,
+				2A1111111111AAD0 /* CrashDetectionManager.swift in Sources */,
+				2A1111111111AAD2 /* LocationSharingManager.swift in Sources */,
+				2A1111111111AAD4 /* HazardDetectionManager.swift in Sources */,
+				2A1111111111AAD6 /* RideHubView.swift in Sources */,
+				2A1111111111AAD8 /* EmergencyResponseView.swift in Sources */,
+				2A1111111111AADA /* ICEScreenView.swift in Sources */,
+				2A1111111111AADE /* AuthenticationView.swift in Sources */,
+				2A1111111111AAE0 /* DigitalGarageView.swift in Sources */,
+				2A1111111111AAE2 /* SearchView.swift in Sources */,
+				2A1111111111AAE4 /* BikeManager.swift in Sources */,
+				2A1111111111AAE6 /* AddEditBikeView.swift in Sources */,
+				2A1111111111AAE8 /* BikeDetailView.swift in Sources */,
+				2A1111111111AAEA /* MaintenanceView.swift in Sources */,
+				2A1111111111AAEC /* AddEditMaintenanceView.swift in Sources */,
+				2A1111111111AAEE /* RideNavigationView.swift in Sources */,
+				2A1111111111AAF0 /* GroupRideManager.swift in Sources */,
+				2A1111111111AAF2 /* WeatherManager.swift in Sources */,
+				2A1111111111AAF4 /* WeatherAlertsView.swift in Sources */,
+				2A1111111111AAF6 /* FuelFinderView.swift in Sources */,
+				2A1111111111AAAA /* MotoRevApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		2A111111111199FB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = CF4YCPU4F2;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		2A111111111199FC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = CF4YCPU4F2;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		2A1111111111AACB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"MotoRev/Preview Content\"";
+				DEVELOPMENT_TEAM = CF4YCPU4F2;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "MotoRev needs location access to track your rides and provide safety features.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "MotoRev needs location access to track your rides and provide safety features.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "MotoRev uses motion sensors to detect crashes and provide safety features.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.rivers22.motorev;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		2A1111111111AACC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"MotoRev/Preview Content\"";
+				DEVELOPMENT_TEAM = CF4YCPU4F2;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "MotoRev needs location access to track your rides and provide safety features.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "MotoRev needs location access to track your rides and provide safety features.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "MotoRev uses motion sensors to detect crashes and provide safety features.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.rivers22.motorev;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2A111111111199FA /* Build configuration list for PBXProject "MotoRev" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2A111111111199FB /* Debug */,
+				2A111111111199FC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2A1111111111AACA /* Build configuration list for PBXNativeTarget "MotoRev" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2A1111111111AACB /* Debug */,
+				2A1111111111AACC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 2A111111111199FE /* Project object */;
+}
