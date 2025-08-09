@@ -125,13 +125,33 @@ router.post('/register', async (req, res) => {
       SELECT id, username, email, first_name, last_name, phone,
              motorcycle_make, motorcycle_model, motorcycle_year,
              profile_picture_url, bio, safety_score, total_miles,
+             role, is_premium, subscription_tier,
              created_at, updated_at
       FROM users WHERE id = ?
     `, [userId]);
 
     res.status(201).json({
       message: 'User registered successfully',
-      user: userData,
+      user: {
+        id: userData.id,
+        username: userData.username,
+        email: userData.email,
+        firstName: userData.first_name,
+        lastName: userData.last_name,
+        phone: userData.phone,
+        motorcycleMake: userData.motorcycle_make,
+        motorcycleModel: userData.motorcycle_model,
+        motorcycleYear: userData.motorcycle_year,
+        profilePictureUrl: userData.profile_picture_url,
+        bio: userData.bio,
+        safetyScore: userData.safety_score,
+        totalMiles: parseFloat(userData.total_miles) || 0,
+        isPremium: Boolean(userData.is_premium),
+        role: userData.role || 'user',
+        subscriptionTier: userData.subscription_tier || 'standard',
+        createdAt: userData.created_at,
+        updatedAt: userData.updated_at
+      },
       token: token,
       expiresIn: JWT_EXPIRES_IN
     });
@@ -156,6 +176,7 @@ router.post('/login', async (req, res) => {
       SELECT id, username, email, password_hash, first_name, last_name, phone,
              motorcycle_make, motorcycle_model, motorcycle_year,
              profile_picture_url, bio, safety_score, total_miles,
+             role, is_premium, subscription_tier,
              created_at, updated_at
       FROM users WHERE username = ? OR email = ?
     `, [username, username]);
@@ -205,9 +226,12 @@ router.post('/login', async (req, res) => {
       postsCount: 0, // Not in current schema
       followersCount: 0, // Not in current schema
       followingCount: 0, // Not in current schema
-      status: "active", // Default status
-      locationSharingEnabled: false, // Not in current schema
-      isVerified: false, // Not in current schema
+      status: 'active',
+      locationSharingEnabled: false,
+      isVerified: false,
+      isPremium: Boolean(dbUser.is_premium),
+      role: dbUser.role || 'user',
+      subscriptionTier: dbUser.subscription_tier || 'standard',
       createdAt: dbUser.created_at,
       updatedAt: dbUser.updated_at
     };
@@ -279,7 +303,8 @@ router.get('/me', authenticateToken, async (req, res) => {
              motorcycle_make, motorcycle_model, motorcycle_year, riding_experience,
              profile_picture_url, bio, safety_score, total_miles,
              posts_count, followers_count, following_count, status,
-             location_sharing_enabled, is_verified, created_at, updated_at
+             location_sharing_enabled, is_verified, role, is_premium, subscription_tier,
+             created_at, updated_at
       FROM users WHERE id = ?
     `, [req.user.userId]);
 
@@ -287,7 +312,7 @@ router.get('/me', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Transform to camelCase for iOS compatibility (same as profile endpoint)
+    // Transform to camelCase for iOS compatibility
     const userResponse = {
       id: user.id,
       username: user.username,
@@ -309,6 +334,9 @@ router.get('/me', authenticateToken, async (req, res) => {
       status: user.status || 'offline',
       locationSharingEnabled: Boolean(user.location_sharing_enabled),
       isVerified: Boolean(user.is_verified),
+      isPremium: Boolean(user.is_premium),
+      role: user.role || 'user',
+      subscriptionTier: user.subscription_tier || 'standard',
       createdAt: user.created_at,
       updatedAt: user.updated_at
     };
