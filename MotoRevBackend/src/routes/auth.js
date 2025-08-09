@@ -179,9 +179,9 @@ router.post('/login', async (req, res) => {
 
     // Create session
     await run(`
-      INSERT INTO user_sessions (user_id, session_token, refresh_token, expires_at)
-      VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL 7 DAY))
-    `, [user.id, token, token]);
+      INSERT INTO user_sessions (user_id, refresh_token, expires_at)
+      VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 7 DAY))
+    `, [user.id, token]);
 
     // Remove password from response and convert to camelCase for iOS
     const { password_hash, ...dbUser } = user;
