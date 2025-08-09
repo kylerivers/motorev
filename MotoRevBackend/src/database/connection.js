@@ -27,10 +27,9 @@ const dbConfig = {
   password: process.env.MYSQL_PASSWORD || process.env.DB_PASSWORD || '',
   database: process.env.MYSQL_DATABASE || process.env.DB_NAME || 'motorev',
   charset: 'utf8mb4',
+  waitForConnections: true,
   connectionLimit: 10,
-  acquireTimeout: 60000,
-  timeout: 60000,
-  reconnect: true
+  queueLimit: 0
 };
 
 // Debug: Log the database configuration (without password)
@@ -98,9 +97,7 @@ const run = async (sql, params = []) => {
 const executeMultiple = async (sql) => {
   const connection = await pool.getConnection();
   try {
-    // Split SQL by semicolons and execute each statement
     const statements = sql.split(';').filter(stmt => stmt.trim().length > 0);
-    
     for (const statement of statements) {
       if (statement.trim()) {
         await connection.execute(statement);

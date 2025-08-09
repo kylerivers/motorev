@@ -9,17 +9,14 @@ Object.keys(process.env).sort().forEach(key => {
 });
 console.log('================================');
 
-// Force set Railway environment variables if they exist
-if (process.env.MYSQL_HOST) {
-  console.log('✅ Railway MySQL variables detected');
-  console.log('MYSQL_HOST:', process.env.MYSQL_HOST);
-  console.log('MYSQL_USER:', process.env.MYSQL_USER);
-  console.log('MYSQL_DATABASE:', process.env.MYSQL_DATABASE);
-  console.log('MYSQL_PORT:', process.env.MYSQL_PORT);
-  console.log('MYSQL_PASSWORD:', process.env.MYSQL_PASSWORD ? '***SET***' : 'NOT SET');
-} else {
-  console.log('❌ Railway MySQL variables NOT detected');
-  console.log('Available env vars:', Object.keys(process.env).filter(k => k.includes('MYSQL')));
+// Map Railway MySQL env (MYSQLHOST-style) to our expected underscore vars
+if (process.env.MYSQLHOST) {
+  console.log('✅ Mapping Railway MySQL variables');
+  process.env.MYSQL_HOST = process.env.MYSQL_HOST || process.env.MYSQLHOST;
+  process.env.MYSQL_PORT = process.env.MYSQL_PORT || process.env.MYSQLPORT;
+  process.env.MYSQL_USER = process.env.MYSQL_USER || process.env.MYSQLUSER;
+  process.env.MYSQL_PASSWORD = process.env.MYSQL_PASSWORD || process.env.MYSQLPASSWORD;
+  process.env.MYSQL_DATABASE = process.env.MYSQL_DATABASE || process.env.MYSQLDATABASE;
 }
 
 // Start the server

@@ -91,6 +91,11 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Root OK endpoint (some platforms probe '/')
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'OK' });
+});
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);

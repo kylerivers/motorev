@@ -9,7 +9,7 @@ SET CHARACTER SET utf8mb4;
 
 -- Users table - Core user profiles and authentication
 CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
@@ -47,8 +47,8 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- User sessions for authentication management
 CREATE TABLE IF NOT EXISTS user_sessions (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
     refresh_token VARCHAR(500) UNIQUE NOT NULL,
     device_id VARCHAR(100),
     device_type VARCHAR(50),
@@ -64,9 +64,9 @@ CREATE TABLE IF NOT EXISTS user_sessions (
 
 -- Follower relationships for social features
 CREATE TABLE IF NOT EXISTS followers (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    follower_id INT NOT NULL,
-    following_id INT NOT NULL,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    follower_id BIGINT NOT NULL,
+    following_id BIGINT NOT NULL,
     status ENUM('active', 'blocked') DEFAULT 'active',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY unique_follow (follower_id, following_id),
@@ -78,15 +78,15 @@ CREATE TABLE IF NOT EXISTS followers (
 
 -- Social posts for community features
 CREATE TABLE IF NOT EXISTS posts (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
     content TEXT NOT NULL,
     image_url TEXT,
     video_url TEXT,
     location_lat DECIMAL(10, 8),
     location_lng DECIMAL(11, 8),
     location_name VARCHAR(200),
-    ride_id INT,
+    ride_id BIGINT,
     post_type ENUM('general', 'ride', 'safety', 'maintenance', 'route') DEFAULT 'general',
     visibility ENUM('public', 'followers', 'private') DEFAULT 'public',
     likes_count INT DEFAULT 0,
@@ -103,8 +103,8 @@ CREATE TABLE IF NOT EXISTS posts (
 
 -- Social stories (temporary posts)
 CREATE TABLE IF NOT EXISTS stories (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
     content TEXT,
     image_url TEXT,
     video_url TEXT,
@@ -122,9 +122,9 @@ CREATE TABLE IF NOT EXISTS stories (
 
 -- Story views tracking
 CREATE TABLE IF NOT EXISTS story_views (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    story_id INT NOT NULL,
-    viewer_id INT NOT NULL,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    story_id BIGINT NOT NULL,
+    viewer_id BIGINT NOT NULL,
     viewed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY unique_view (story_id, viewer_id),
     FOREIGN KEY (story_id) REFERENCES stories(id) ON DELETE CASCADE,
@@ -133,9 +133,9 @@ CREATE TABLE IF NOT EXISTS story_views (
 
 -- Post likes
 CREATE TABLE IF NOT EXISTS post_likes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    post_id INT NOT NULL,
-    user_id INT NOT NULL,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    post_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY unique_like (post_id, user_id),
     INDEX idx_post_id (post_id),
@@ -146,11 +146,11 @@ CREATE TABLE IF NOT EXISTS post_likes (
 
 -- Post comments
 CREATE TABLE IF NOT EXISTS post_comments (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    post_id INT NOT NULL,
-    user_id INT NOT NULL,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    post_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
     content TEXT NOT NULL,
-    parent_comment_id INT,
+    parent_comment_id BIGINT,
     likes_count INT DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -162,8 +162,8 @@ CREATE TABLE IF NOT EXISTS post_comments (
 
 -- Rides tracking for journey management
 CREATE TABLE IF NOT EXISTS rides (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
     title VARCHAR(200),
     description TEXT,
     start_time DATETIME NOT NULL,
@@ -194,9 +194,9 @@ CREATE TABLE IF NOT EXISTS rides (
 
 -- Real-time location updates during rides
 CREATE TABLE IF NOT EXISTS location_updates (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    ride_id INT NOT NULL,
-    user_id INT NOT NULL,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    ride_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
     latitude DECIMAL(10, 8) NOT NULL,
     longitude DECIMAL(11, 8) NOT NULL,
     altitude DECIMAL(7, 2),
@@ -231,9 +231,9 @@ CREATE TABLE IF NOT EXISTS location_shares (
 
 -- Emergency events and safety incidents
 CREATE TABLE IF NOT EXISTS emergency_events (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    ride_id INT,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    ride_id BIGINT,
     event_type ENUM('crash', 'breakdown', 'medical', 'weather', 'manual') NOT NULL,
     severity ENUM('low', 'medium', 'high', 'critical') NOT NULL,
     latitude DECIMAL(10, 8) NOT NULL,
@@ -254,8 +254,8 @@ CREATE TABLE IF NOT EXISTS emergency_events (
 
 -- Hazard reports for community safety
 CREATE TABLE IF NOT EXISTS hazard_reports (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    reporter_id INT NOT NULL,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    reporter_id BIGINT NOT NULL,
     hazard_type ENUM('pothole', 'debris', 'construction', 'weather', 'traffic', 'road_condition', 'other') NOT NULL,
     severity ENUM('low', 'medium', 'high') NOT NULL,
     latitude DECIMAL(10, 8) NOT NULL,
@@ -276,9 +276,9 @@ CREATE TABLE IF NOT EXISTS hazard_reports (
 
 -- Hazard confirmations from other users
 CREATE TABLE IF NOT EXISTS hazard_confirmations (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    hazard_id INT NOT NULL,
-    user_id INT NOT NULL,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    hazard_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
     confirmation_type ENUM('upvote', 'downvote', 'still_there', 'resolved') NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY unique_confirmation (hazard_id, user_id),
@@ -288,10 +288,10 @@ CREATE TABLE IF NOT EXISTS hazard_confirmations (
 
 -- Riding packs for group rides
 CREATE TABLE IF NOT EXISTS riding_packs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(200) NOT NULL,
     description TEXT,
-    created_by INT NOT NULL,
+    created_by BIGINT NOT NULL,
     max_members INT DEFAULT 10,
     current_members INT DEFAULT 1,
     pack_type ENUM('temporary', 'permanent') DEFAULT 'temporary',
@@ -310,9 +310,9 @@ CREATE TABLE IF NOT EXISTS riding_packs (
 
 -- Pack membership management
 CREATE TABLE IF NOT EXISTS pack_members (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    pack_id INT NOT NULL,
-    user_id INT NOT NULL,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    pack_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
     role ENUM('leader', 'co_leader', 'member') DEFAULT 'member',
     status ENUM('invited', 'active', 'left', 'removed') DEFAULT 'active',
     joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
