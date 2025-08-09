@@ -5,11 +5,8 @@ import CoreLocation // Added for CLLocationCoordinate2D
 class NetworkManager: ObservableObject {
     static let shared = NetworkManager()
     
-    #if DEBUG
-    let baseURL = "http://localhost:3000/api"
-    #else
-    let baseURL = "https://YOUR-RAILWAY-URL.railway.app/api"
-    #endif
+    // Use production API base URL for all builds to ensure device connectivity
+    let baseURL = "https://motorev-prod-production.up.railway.app/api"
     private let session = URLSession.shared
     private var cancellables = Set<AnyCancellable>()
     
@@ -19,11 +16,7 @@ class NetworkManager: ObservableObject {
     
     private init() {
         loadStoredAuth()
-        
-        // Auto-login for development testing
-        if !isLoggedIn {
-            autoLoginForDevelopment()
-        }
+        // No auto-login in production builds. Users must authenticate against the real backend.
     }
     
     // MARK: - Authentication Methods
@@ -645,50 +638,7 @@ class NetworkManager: ObservableObject {
     
     // MARK: - Development Helper Methods
     
-    private func autoLoginForDevelopment() {
-        // Use test token for development
-        self.authToken = "test-token-for-development"
-        
-        // Create a test user
-        let testUser = User(
-            id: UUID(),
-            username: "TestUser",
-            email: "test@motorev.com",
-            firstName: "Test",
-            lastName: "User",
-            phone: nil,
-            bio: "Development test user",
-            bike: "Test Bike",
-            motorcycleMake: "Test",
-            motorcycleModel: "Model",
-            motorcycleYear: 2024,
-            profilePictureUrl: nil,
-            ridingExperience: .intermediate,
-            stats: UserStats(
-                totalMiles: 1000.0,
-                totalRides: 25,
-                safetyScore: 95,
-                averageSpeed: 45.0,
-                longestRide: 150.0
-            ),
-            postsCount: 5,
-            followersCount: 10,
-            followingCount: 15,
-            status: .online,
-            locationSharingEnabled: false,
-            isVerified: true,
-            followers: [],
-            following: [],
-            badges: [],
-            rank: 42,
-            joinDate: Date()
-        )
-        
-        self.currentUser = testUser
-        self.isLoggedIn = true
-        
-        print("🧪 Development auto-login successful for: \(testUser.username)")
-    }
+    // (Removed autoLoginForDevelopment to ensure real authentication)
     
     // MARK: - Helper Methods
     
@@ -889,3 +839,43 @@ struct AnyCodable: Codable {
 } 
 
 // Note: ErrorResponse is defined in DataModels.swift
+
+// MARK: - Public Ride APIs
+extension NetworkManager {
+    struct EndRideRequest: Codable {
+        let endLocation: String?
+        let totalDistance: Double
+        let maxSpeed: Double
+        let avgSpeed: Double
+        let durationMinutes: Int
+    }
+    
+    func endRide(rideId: Int, endLocation: String?, totalDistance: Double, maxSpeed: Double, avgSpeed: Double, durationMinutes: Int) -> AnyPublisher<MessageResponse, Error> {
+        guard let token = authToken else {
+            return Fail(error: NetworkError.notAuthenticated).eraseToAnyPublisher()
+        }
+        let url = URL(string: "\(baseURL)/rides/\(rideId)/end")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "PUT"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        let body = EndRideRequest(endLocation: endLocation, totalDistance: totalDistance, maxSpeed: maxSpeed, avgSpeed: avgSpeed, durationMinutes: durationMinutes)
+        do {
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            request.httpBody = try encoder.encode(body)
+        } catch {
+            return Fail(error: error).eraseToAnyPublisher()
+        }
+        return URLSession.shared.dataTaskPublisher(for: request)
+            .tryMap { data, response in
+                guard let httpResponse = response as? HTTPURLResponse, 200..<300 ~= httpResponse.statusCode else {
+                    throw NetworkError.invalidResponse
+                }
+                return data
+            }
+            .decode(type: MessageResponse.self, decoder: NetworkManager.createJSONDecoder())
+            .receive(on: DispatchQueue.main)
+            .eraseToAnyPublisher()
+    }
+}
