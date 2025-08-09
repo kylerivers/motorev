@@ -37,7 +37,7 @@ async function dropAllTablesForReset() {
 }
 
 async function ensureCoreIdsAreBigInt() {
-  console.log('🔎 Ensuring core id columns use BIGINT...');
+  console.log('🔎 Ensuring core id columns use BIGINT UNSIGNED...');
   const core = [
     { table: 'users', column: 'id' },
     { table: 'posts', column: 'id' },
@@ -53,10 +53,10 @@ async function ensureCoreIdsAreBigInt() {
       const type = rows[0]?.DATA_TYPE;
       const columnType = rows[0]?.COLUMN_TYPE?.toLowerCase() || '';
       const isUnsigned = columnType.includes('unsigned');
-      if (type && (type.toLowerCase() !== 'bigint' || isUnsigned)) {
-        console.log(`   - Upgrading ${table}.${column} (${columnType}) -> BIGINT SIGNED`);
+      if (!rows[0] || type.toLowerCase() !== 'bigint' || !isUnsigned) {
+        console.log(`   - Upgrading ${table}.${column} (${columnType || 'missing'}) -> BIGINT UNSIGNED`);
         await pool.execute('SET FOREIGN_KEY_CHECKS=0');
-        await pool.execute(`ALTER TABLE \`${table}\` MODIFY \`${column}\` BIGINT NOT NULL AUTO_INCREMENT`);
+        await pool.execute(`ALTER TABLE \`${table}\` MODIFY \`${column}\` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT`);
         await pool.execute('SET FOREIGN_KEY_CHECKS=1');
       }
     } catch (e) {
@@ -88,10 +88,10 @@ async function ensureCoreIdsAreBigInt() {
       const type = rows[0]?.DATA_TYPE;
       const columnType = rows[0]?.COLUMN_TYPE?.toLowerCase() || '';
       const isUnsigned = columnType.includes('unsigned');
-      if (type && (type.toLowerCase() !== 'bigint' || isUnsigned)) {
-        console.log(`   - Upgrading ${table}.${column} (${columnType}) -> BIGINT SIGNED`);
+      if (!rows[0] || type.toLowerCase() !== 'bigint' || !isUnsigned) {
+        console.log(`   - Upgrading ${table}.${column} (${columnType || 'missing'}) -> BIGINT UNSIGNED`);
         await pool.execute('SET FOREIGN_KEY_CHECKS=0');
-        await pool.execute(`ALTER TABLE \`${table}\` MODIFY \`${column}\` BIGINT NOT NULL`);
+        await pool.execute(`ALTER TABLE \`${table}\` MODIFY \`${column}\` BIGINT UNSIGNED NOT NULL`);
         await pool.execute('SET FOREIGN_KEY_CHECKS=1');
       }
     } catch { /* ignore if table not present yet */ }
@@ -112,9 +112,11 @@ async function setupDatabase(attempt = 0) {
     const schemaPath = path.join(__dirname, 'schema_mysql.sql');
     const schema = await fs.readFile(schemaPath, 'utf8');
 
-    // Apply schema with FK checks off to avoid creation-order issues
+    // Force all BIGINT columns in schema to UNSIGNED for compatibility
+    const adjustedSchema = schema.replace(/\bBIGINT\b/gi, 'BIGINT UNSIGNED');
+
     await pool.execute('SET FOREIGN_KEY_CHECKS=0');
-    await executeMultiple(schema);
+    await executeMultiple(adjustedSchema);
     await pool.execute('SET FOREIGN_KEY_CHECKS=1');
 
     console.log('✅ Database schema created successfully');
