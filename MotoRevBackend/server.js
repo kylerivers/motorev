@@ -86,7 +86,7 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     service: 'MotoRev API',
-    version: '2.0.0',
+    version: '2.1.0',
     database: 'MySQL'
   });
 });
@@ -107,6 +107,11 @@ app.use('/api/safety', safetyRoutes);
 app.use('/api/location', locationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/fuel', require('./src/routes/fuel'));
+app.use('/api/recordings', require('./src/routes/recordings'));
+app.use('/api/events', require('./src/routes/events'));
+app.use('/api/music', require('./src/routes/music'));
+app.use('/api/voice', require('./src/routes/voice'));
 
 // Serve static files for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
