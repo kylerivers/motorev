@@ -86,7 +86,7 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     service: 'MotoRev API',
-    version: '2.1.0',
+    version: '2.2.0',
     database: 'MySQL'
   });
 });
