@@ -1,10 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const sqlite3 = require('sqlite3').verbose();
 const { authenticateToken } = require('../middleware/auth');
-
-// Database connection
-const db = new sqlite3.Database('./src/database/database.db');
+const { query } = require('../database/connection');
 
 // Get all events (public and user's events)
 router.get('/', authenticateToken, async (req, res) => {
@@ -12,7 +9,7 @@ router.get('/', authenticateToken, async (req, res) => {
         const userId = req.user.id;
         
         // Get public events and user's private events
-        db.all(`
+        const events = await query(`
             SELECT e.*, u.username as organizer_username,
                    COUNT(ep.user_id) as participant_count,
                    CASE WHEN ep.user_id = ? THEN 1 ELSE 0 END as is_participating
@@ -22,13 +19,9 @@ router.get('/', authenticateToken, async (req, res) => {
             WHERE e.is_public = 1 OR e.organizer_id = ? OR ep.user_id = ?
             GROUP BY e.id, u.username
             ORDER BY e.start_time ASC
-        `, [userId, userId, userId], (err, events) => {
-            if (err) {
-                console.error('Error fetching events:', err);
-                return res.status(500).json({ error: 'Failed to fetch events' });
-            }
-            res.json({ events });
-        });
+        `, [userId, userId, userId]);
+        
+        res.json({ events });
     } catch (error) {
         console.error('Error fetching events:', error);
         res.status(500).json({ error: 'Failed to fetch events' });
@@ -41,7 +34,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
         const eventId = req.params.id;
         const userId = req.user.id;
         
-        const event = await get(`
+        const events = await query(`
             SELECT e.*, u.username as organizer_username,
                    COUNT(ep.user_id) as participant_count,
                    CASE WHEN ep.user_id = ? THEN 1 ELSE 0 END as is_participating
@@ -52,12 +45,14 @@ router.get('/:id', authenticateToken, async (req, res) => {
             GROUP BY e.id, u.username
         `, [userId, eventId, userId, userId]);
         
-        if (!event) {
+        if (!events || events.length === 0) {
             return res.status(404).json({ error: 'Event not found or access denied' });
         }
         
+        const event = events[0];
+        
         // Get participants
-        const participants = await all(`
+        const participants = await query(`
             SELECT u.id, u.username, u.email, ep.joined_at
             FROM event_participants ep
             JOIN users u ON ep.user_id = u.id
@@ -82,7 +77,7 @@ router.post('/', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'Title, start time, and location are required' });
         }
         
-        const result = await run(`
+        const result = await query(`
             INSERT INTO ride_events (
                 organizer_id, title, description, start_time, end_time, 
                 location, max_participants, is_public, created_at
@@ -93,7 +88,7 @@ router.post('/', authenticateToken, async (req, res) => {
         ]);
         
         // Organizer automatically joins their own event
-        await run(`
+        await query(`
             INSERT INTO event_participants (event_id, user_id, joined_at)
             VALUES (?, ?, NOW())
         `, [result.insertId, organizerId]);
@@ -115,7 +110,7 @@ router.post('/:id/join', authenticateToken, async (req, res) => {
         const userId = req.user.id;
         
         // Check if event exists and user can join
-        const event = await get(`
+        const events = await query(`
             SELECT e.*, COUNT(ep.user_id) as participant_count
             FROM ride_events e
             LEFT JOIN event_participants ep ON e.id = ep.event_id
@@ -123,9 +118,11 @@ router.post('/:id/join', authenticateToken, async (req, res) => {
             GROUP BY e.id
         `, [eventId, userId]);
         
-        if (!event) {
+        if (!events || events.length === 0) {
             return res.status(404).json({ error: 'Event not found or access denied' });
         }
+        
+        const event = events[0];
         
         // Check if event is full
         if (event.max_participants && event.participant_count >= event.max_participants) {
@@ -133,17 +130,17 @@ router.post('/:id/join', authenticateToken, async (req, res) => {
         }
         
         // Check if user already joined
-        const existing = await get(`
+        const existing = await query(`
             SELECT id FROM event_participants 
             WHERE event_id = ? AND user_id = ?
         `, [eventId, userId]);
         
-        if (existing) {
+        if (existing && existing.length > 0) {
             return res.status(400).json({ error: 'Already joined this event' });
         }
         
         // Join event
-        await run(`
+        await query(`
             INSERT INTO event_participants (event_id, user_id, joined_at)
             VALUES (?, ?, NOW())
         `, [eventId, userId]);
@@ -162,26 +159,26 @@ router.post('/:id/leave', authenticateToken, async (req, res) => {
         const userId = req.user.id;
         
         // Check if user is in the event
-        const participation = await get(`
+        const participation = await query(`
             SELECT id FROM event_participants 
             WHERE event_id = ? AND user_id = ?
         `, [eventId, userId]);
         
-        if (!participation) {
+        if (!participation || participation.length === 0) {
             return res.status(400).json({ error: 'Not participating in this event' });
         }
         
         // Check if user is organizer
-        const event = await get(`
+        const events = await query(`
             SELECT organizer_id FROM ride_events WHERE id = ?
         `, [eventId]);
         
-        if (event && event.organizer_id === userId) {
+        if (events && events.length > 0 && events[0].organizer_id === userId) {
             return res.status(400).json({ error: 'Organizer cannot leave their own event. Delete the event instead.' });
         }
         
         // Leave event
-        await run(`
+        await query(`
             DELETE FROM event_participants 
             WHERE event_id = ? AND user_id = ?
         `, [eventId, userId]);
@@ -201,20 +198,20 @@ router.put('/:id', authenticateToken, async (req, res) => {
         const { title, description, start_time, end_time, location, max_participants, is_public } = req.body;
         
         // Check if user is organizer
-        const event = await get(`
+        const events = await query(`
             SELECT organizer_id FROM ride_events WHERE id = ?
         `, [eventId]);
         
-        if (!event) {
+        if (!events || events.length === 0) {
             return res.status(404).json({ error: 'Event not found' });
         }
         
-        if (event.organizer_id !== userId) {
+        if (events[0].organizer_id !== userId) {
             return res.status(403).json({ error: 'Only organizer can update event' });
         }
         
         // Update event
-        await run(`
+        await query(`
             UPDATE ride_events SET
                 title = COALESCE(?, title),
                 description = COALESCE(?, description),
@@ -241,23 +238,23 @@ router.delete('/:id', authenticateToken, async (req, res) => {
         const userId = req.user.id;
         
         // Check if user is organizer
-        const event = await get(`
+        const events = await query(`
             SELECT organizer_id FROM ride_events WHERE id = ?
         `, [eventId]);
         
-        if (!event) {
+        if (!events || events.length === 0) {
             return res.status(404).json({ error: 'Event not found' });
         }
         
-        if (event.organizer_id !== userId) {
+        if (events[0].organizer_id !== userId) {
             return res.status(403).json({ error: 'Only organizer can delete event' });
         }
         
         // Delete participants first (due to foreign key constraint)
-        await run(`DELETE FROM event_participants WHERE event_id = ?`, [eventId]);
+        await query(`DELETE FROM event_participants WHERE event_id = ?`, [eventId]);
         
         // Delete event
-        await run(`DELETE FROM ride_events WHERE id = ?`, [eventId]);
+        await query(`DELETE FROM ride_events WHERE id = ?`, [eventId]);
         
         res.json({ message: 'Event deleted successfully' });
     } catch (error) {
@@ -274,7 +271,7 @@ router.get('/nearby/:lat/:lon', authenticateToken, async (req, res) => {
         const userId = req.user.id;
         
         // Simple distance calculation (for more accurate, use spatial functions)
-        const events = await all(`
+        const events = await query(`
             SELECT e.*, u.username as organizer_username,
                    COUNT(ep.user_id) as participant_count,
                    CASE WHEN ep.user_id = ? THEN 1 ELSE 0 END as is_participating,
