@@ -99,6 +99,82 @@ async function ensureCoreIdsAreBigInt() {
   console.log('✅ Core id columns verified/updated');
 }
 
+async function ensureAdminColumns() {
+  console.log('🔎 Ensuring admin-related columns exist...');
+  const checks = [
+    { column: 'role', ddl: "ALTER TABLE `users` ADD COLUMN `role` ENUM('user','admin','super_admin') DEFAULT 'user' AFTER is_premium" },
+    { column: 'subscription_tier', ddl: "ALTER TABLE `users` ADD COLUMN `subscription_tier` ENUM('standard','pro') DEFAULT 'standard' AFTER role" }
+  ];
+  for (const { column, ddl } of checks) {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = ?`,
+        [column]
+      );
+      if (rows.length === 0) {
+        console.log(`   - Adding users.${column}`);
+        await pool.execute(ddl);
+      }
+    } catch (e) {
+      console.log(`   - Could not verify/add users.${column}: ${e.message}`);
+    }
+  }
+  console.log('✅ Admin columns verified');
+}
+
+async function ensureAdditionalColumns() {
+  console.log('🔧 Ensuring additional table columns...');
+  
+  // Check and add columns to riding_packs table
+  const ridingPacksColumns = [
+    { name: 'current_track', ddl: 'ALTER TABLE riding_packs ADD COLUMN current_track VARCHAR(255) DEFAULT NULL' },
+    { name: 'current_artist', ddl: 'ALTER TABLE riding_packs ADD COLUMN current_artist VARCHAR(255) DEFAULT NULL' },
+    { name: 'track_updated_at', ddl: 'ALTER TABLE riding_packs ADD COLUMN track_updated_at TIMESTAMP DEFAULT NULL' }
+  ];
+  
+  for (const column of ridingPacksColumns) {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'riding_packs' AND COLUMN_NAME = ?`,
+        [column.name]
+      );
+      if (rows.length === 0) {
+        console.log(`   - Adding riding_packs.${column.name}`);
+        await pool.execute(column.ddl);
+      } else {
+        console.log(`   - riding_packs.${column.name} already exists`);
+      }
+    } catch (e) {
+      console.log(`   - Could not verify/add riding_packs.${column.name}: ${e.message}`);
+    }
+  }
+  
+  // Check and add columns to pack_members table
+  const packMembersColumns = [
+    { name: 'is_music_connected', ddl: 'ALTER TABLE pack_members ADD COLUMN is_music_connected BOOLEAN DEFAULT FALSE' },
+    { name: 'is_voice_connected', ddl: 'ALTER TABLE pack_members ADD COLUMN is_voice_connected BOOLEAN DEFAULT FALSE' }
+  ];
+  
+  for (const column of packMembersColumns) {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'pack_members' AND COLUMN_NAME = ?`,
+        [column.name]
+      );
+      if (rows.length === 0) {
+        console.log(`   - Adding pack_members.${column.name}`);
+        await pool.execute(column.ddl);
+      } else {
+        console.log(`   - pack_members.${column.name} already exists`);
+      }
+    } catch (e) {
+      console.log(`   - Could not verify/add pack_members.${column.name}: ${e.message}`);
+    }
+  }
+  
+  console.log('✅ Additional columns verified');
+}
+
 async function setupDatabase(attempt = 0) {
   try {
     console.log('🔧 Setting up MySQL database...');
@@ -118,6 +194,10 @@ async function setupDatabase(attempt = 0) {
     await pool.execute('SET FOREIGN_KEY_CHECKS=0');
     await executeMultiple(adjustedSchema);
     await pool.execute('SET FOREIGN_KEY_CHECKS=1');
+
+    // Ensure columns in case table already existed
+    await ensureAdminColumns();
+    await ensureAdditionalColumns();
 
     console.log('✅ Database schema created successfully');
 
