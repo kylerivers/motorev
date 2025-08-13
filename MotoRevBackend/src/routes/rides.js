@@ -3,6 +3,31 @@ const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
 const { query } = require('../database/connection');
 
+// TEMPORARY: Events endpoint until Railway deployment issue is fixed
+router.get('/events', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        
+        // Get public events and user's private events
+        const events = await query(`
+            SELECT e.*, u.username as organizer_username,
+                   COUNT(ep.user_id) as participant_count,
+                   CASE WHEN ep.user_id = ? THEN 1 ELSE 0 END as is_participating
+            FROM ride_events e
+            JOIN users u ON e.organizer_id = u.id
+            LEFT JOIN event_participants ep ON e.id = ep.event_id
+            WHERE e.is_public = 1 OR e.organizer_id = ? OR ep.user_id = ?
+            GROUP BY e.id, u.username
+            ORDER BY e.start_time ASC
+        `, [userId, userId, userId]);
+        
+        res.json({ events });
+    } catch (error) {
+        console.error('Error fetching events:', error);
+        res.status(500).json({ error: 'Failed to fetch events' });
+    }
+});
+
 // Helper function to update user statistics
 async function updateUserStats(participants, distance, duration) {
     try {
