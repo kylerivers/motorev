@@ -81,6 +81,7 @@ async function authenticateToken(req, res, next) {
       email: decoded.email,
       username: decoded.username
     };
+    req.userId = decoded.userId;
 
     next();
 
@@ -149,39 +150,37 @@ function requireVerified(req, res, next) {
 // Middleware to check if user is admin
 async function requireAdmin(req, res, next) {
   try {
-    if (!req.userId) {
-      return res.status(401).json({
-        error: 'Authentication required'
-      });
+    const userId = req.userId || req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
     }
-
-    const userResult = await query(
-      'SELECT preferences FROM users WHERE id = $1',
-      [req.userId]
-    );
-
-    if (userResult.rows.length === 0) {
-      return res.status(404).json({
-        error: 'User not found'
-      });
+    const result = await query('SELECT role FROM users WHERE id = ?', [userId]);
+    const role = result[0]?.role || 'user';
+    if (role !== 'admin' && role !== 'super_admin') {
+      return res.status(403).json({ error: 'Admin access required' });
     }
-
-    const preferences = userResult.rows[0].preferences || {};
-    if (!preferences.isAdmin) {
-      return res.status(403).json({
-        error: 'Admin access required',
-        message: 'You do not have permission to access this resource'
-      });
-    }
-
     next();
-
   } catch (error) {
     console.error('Admin check error:', error);
-    res.status(500).json({
-      error: 'Authorization check failed',
-      message: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
+    res.status(500).json({ error: 'Authorization check failed' });
+  }
+}
+
+async function requireSuperAdmin(req, res, next) {
+  try {
+    const userId = req.userId || req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    const result = await query('SELECT role FROM users WHERE id = ?', [userId]);
+    const role = result[0]?.role || 'user';
+    if (role !== 'super_admin') {
+      return res.status(403).json({ error: 'Super admin access required' });
+    }
+    next();
+  } catch (error) {
+    console.error('Super admin check error:', error);
+    res.status(500).json({ error: 'Authorization check failed' });
   }
 }
 
@@ -189,5 +188,6 @@ module.exports = {
   authenticateToken,
   optionalAuth,
   requireVerified,
-  requireAdmin
+  requireAdmin,
+  requireSuperAdmin
 }; 

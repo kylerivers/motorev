@@ -1,238 +1,177 @@
 const express = require('express');
-const { query, get, run } = require('../database/connection');
-const authRouter = require('./auth');
-const { authenticateToken } = authRouter;
 const router = express.Router();
+const sqlite3 = require('sqlite3').verbose();
+const { authenticateToken } = require('../middleware/auth');
 
-// Start a new ride
-router.post('/start', authenticateToken, async (req, res) => {
-  try {
-    const { title, startLocation, plannedRoute } = req.body;
+// Database connection
+const db = new sqlite3.Database('./src/database/database.db');
 
-    const result = await run(`
-      INSERT INTO rides (
-        user_id, title, start_location_name, route_data, status, 
-        start_time
-      ) VALUES (?, ?, ?, ?, 'active', NOW())
-    `, [
-      req.user.userId,
-      title || 'Ride',
-      startLocation || null,
-      plannedRoute ? JSON.stringify(plannedRoute) : null
-    ]);
+// Save completed ride
+router.post('/completed', authenticateToken, async (req, res) => {
+    try {
+        const { 
+            rideId, 
+            rideType, 
+            startTime, 
+            endTime, 
+            duration, 
+            distance, 
+            averageSpeed, 
+            maxSpeed, 
+            route, 
+            participants, 
+            safetyScore 
+        } = req.body;
+        
+        const userId = req.user.id;
+        
+        // Insert completed ride
+        const insertRideQuery = `
+            INSERT INTO completed_rides (
+                id, user_id, ride_type, start_time, end_time, duration, 
+                distance, average_speed, max_speed, route_data, safety_score, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+        `;
+        
+        const routeDataJson = JSON.stringify(route);
+        
+        db.run(insertRideQuery, [
+            rideId, userId, rideType, startTime, endTime, duration,
+            distance, averageSpeed, maxSpeed, routeDataJson, safetyScore
+        ], function(err) {
+            if (err) {
+                console.error('Error saving completed ride:', err);
+                return res.status(500).json({ error: 'Failed to save ride' });
+            }
+            
+            // Update user stats for all participants
+            updateUserStats(participants, distance, duration);
+            
+            res.json({ 
+                success: true, 
+                message: 'Ride saved successfully',
+                rideId: rideId
+            });
+        });
+        
+    } catch (error) {
+        console.error('Error in save completed ride:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
-    const rideId = result.insertId;
+// Get completed rides for user
+router.get('/completed', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        
+        const query = `
+            SELECT 
+                cr.*,
+                u.username,
+                u.first_name,
+                u.last_name
+            FROM completed_rides cr
+            JOIN users u ON cr.user_id = u.id
+            WHERE cr.user_id = ?
+            ORDER BY cr.start_time DESC
+            LIMIT 50
+        `;
+        
+        db.all(query, [userId], (err, rows) => {
+            if (err) {
+                console.error('Error fetching completed rides:', err);
+                return res.status(500).json({ error: 'Failed to fetch rides' });
+            }
+            
+            const rides = rows.map(row => ({
+                id: row.id,
+                rideType: row.ride_type,
+                startTime: row.start_time,
+                endTime: row.end_time,
+                duration: row.duration,
+                distance: row.distance,
+                averageSpeed: row.average_speed,
+                maxSpeed: row.max_speed,
+                route: JSON.parse(row.route_data || '[]'),
+                participants: [{
+                    id: row.user_id.toString(),
+                    username: row.username,
+                    name: `${row.first_name || ''} ${row.last_name || ''}`.trim(),
+                    isCurrentUser: true
+                }],
+                safetyScore: row.safety_score
+            }));
+            
+            res.json({ rides });
+        });
+        
+    } catch (error) {
+        console.error('Error in get completed rides:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
-    const ride = await get(`
-      SELECT * FROM rides WHERE id = ?
-    `, [rideId]);
+// Get ride statistics for user
+router.get('/stats', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        
+        const statsQuery = `
+            SELECT 
+                COUNT(*) as totalRides,
+                COALESCE(SUM(distance), 0) as totalDistance,
+                COALESCE(SUM(duration), 0) as totalDuration,
+                COALESCE(AVG(safety_score), 100) as averageSafetyScore,
+                COALESCE(MAX(max_speed), 0) as topSpeed
+            FROM completed_rides 
+            WHERE user_id = ?
+        `;
+        
+        db.get(statsQuery, [userId], (err, row) => {
+            if (err) {
+                console.error('Error fetching ride stats:', err);
+                return res.status(500).json({ error: 'Failed to fetch stats' });
+            }
+            
+            res.json({
+                totalRides: row.totalRides || 0,
+                totalDistance: row.totalDistance || 0,
+                totalDuration: row.totalDuration || 0,
+                averageSafetyScore: Math.round(row.averageSafetyScore || 100),
+                topSpeed: row.topSpeed || 0
+            });
+        });
+        
+    } catch (error) {
+        console.error('Error in get ride stats:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
-    res.status(201).json({ 
-      message: 'Ride started successfully',
-      ride: ride 
+// Helper function to update user stats
+function updateUserStats(participants, distance, duration) {
+    const distanceInMiles = distance * 0.000621371; // Convert meters to miles
+    const durationInHours = duration / 3600; // Convert seconds to hours
+    
+    participants.forEach(participant => {
+        // Update user profile with new ride data
+        const updateQuery = `
+            UPDATE users SET 
+                total_rides = COALESCE(total_rides, 0) + 1,
+                total_miles = COALESCE(total_miles, 0) + ?,
+                total_ride_time = COALESCE(total_ride_time, 0) + ?
+            WHERE id = ?
+        `;
+        
+        db.run(updateQuery, [distanceInMiles, durationInHours, participant.id], (err) => {
+            if (err) {
+                console.error('Error updating user stats for participant:', participant.id, err);
+            } else {
+                console.log('Updated stats for user:', participant.username);
+            }
+        });
     });
-  } catch (error) {
-    console.error('Start ride error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// End a ride
-router.put('/:rideId/end', authenticateToken, async (req, res) => {
-  try {
-    const { rideId } = req.params;
-    const { endLocation, totalDistance, maxSpeed, avgSpeed, durationMinutes } = req.body;
-
-    // Verify ride belongs to user
-    const ride = await get(`
-      SELECT id, user_id FROM rides WHERE id = ? AND user_id = ?
-    `, [rideId, req.user.userId]);
-
-    if (!ride) {
-      return res.status(404).json({ error: 'Ride not found' });
-    }
-
-    // Update ride
-    await run(`
-      UPDATE rides 
-      SET status = 'completed', 
-          end_time = NOW(),
-          end_location_name = ?,
-          total_distance = ?,
-          max_speed = ?,
-          avg_speed = ?,
-          duration_minutes = ?
-      WHERE id = ?
-    `, [endLocation, totalDistance, maxSpeed, avgSpeed, durationMinutes, rideId]);
-
-    const updatedRide = await get(`
-      SELECT * FROM rides WHERE id = ?
-    `, [rideId]);
-
-    res.json({ 
-      message: 'Ride ended successfully',
-      ride: updatedRide 
-    });
-  } catch (error) {
-    console.error('End ride error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Get user's rides
-router.get('/my-rides', authenticateToken, async (req, res) => {
-  try {
-    const { limit = 20, offset = 0 } = req.query;
-
-    const rides = await query(`
-      SELECT * FROM rides 
-      WHERE user_id = ? 
-      ORDER BY start_time DESC 
-      LIMIT ? OFFSET ?
-    `, [req.user.userId, parseInt(limit), parseInt(offset)]);
-
-    res.json({ rides });
-  } catch (error) {
-    console.error('Get rides error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Get public rides feed
-router.get('/public', async (req, res) => {
-  try {
-    const { limit = 20, offset = 0 } = req.query;
-
-    const rides = await query(`
-      SELECT r.*, u.username, u.first_name, u.last_name, u.profile_picture_url
-      FROM rides r
-      JOIN users u ON r.user_id = u.id
-      WHERE r.visibility = 'public' AND r.status = 'completed'
-      ORDER BY r.start_time DESC
-      LIMIT ? OFFSET ?
-    `, [parseInt(limit), parseInt(offset)]);
-
-    res.json({ rides });
-  } catch (error) {
-    console.error('Get public rides error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Get specific ride details
-router.get('/:rideId', authenticateToken, async (req, res) => {
-  try {
-    const { rideId } = req.params;
-
-    const ride = await get(`
-      SELECT r.*, u.username, u.first_name, u.last_name, u.profile_picture_url
-      FROM rides r
-      JOIN users u ON r.user_id = u.id
-      WHERE r.id = ?
-    `, [rideId]);
-
-    if (!ride) {
-      return res.status(404).json({ error: 'Ride not found' });
-    }
-
-    // Check if user can view this ride
-    if (ride.visibility === 'private' && ride.user_id !== req.user.userId) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-
-    res.json({ ride });
-  } catch (error) {
-    console.error('Get ride error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Add location update to active ride
-router.post('/:rideId/location', authenticateToken, async (req, res) => {
-  try {
-    const { rideId } = req.params;
-    const { latitude, longitude, altitude, speed, heading, accuracy } = req.body;
-
-    // Verify ride exists and belongs to user
-    const ride = await get(`
-      SELECT id FROM rides WHERE id = ? AND user_id = ? AND status = 'active'
-    `, [rideId, req.user.userId]);
-
-    if (!ride) {
-      return res.status(404).json({ error: 'Active ride not found' });
-    }
-
-    // Add location update
-    await run(`
-      INSERT INTO location_updates (
-        ride_id, user_id, latitude, longitude, altitude, speed, heading, accuracy, timestamp
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
-    `, [rideId, req.user.userId, latitude, longitude, altitude, speed, heading, accuracy]);
-
-    res.json({ message: 'Location updated successfully' });
-  } catch (error) {
-    console.error('Add location error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Get ride statistics
-router.get('/stats/summary', authenticateToken, async (req, res) => {
-  try {
-    const stats = await get(`
-      SELECT 
-        COUNT(*) as total_rides,
-        SUM(total_distance) as total_distance,
-        SUM(duration_minutes) as total_minutes,
-        AVG(avg_speed) as avg_speed,
-        MAX(max_speed) as max_speed
-      FROM rides 
-      WHERE user_id = ? AND status = 'completed'
-    `, [req.user.userId]);
-
-    res.json({ stats });
-  } catch (error) {
-    console.error('Get stats error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+}
 
 module.exports = router;
-
-// Search rides
-router.get('/search', authenticateToken, async (req, res) => {
-  try {
-    const { query: searchQuery, limit = 20, offset = 0 } = req.query;
-    
-    if (!searchQuery || searchQuery.trim().length < 2) {
-      return res.status(400).json({ error: 'Search query must be at least 2 characters' });
-    }
-
-    const rides = await query(`
-      SELECT r.*, u.username, u.first_name, u.last_name, u.profile_picture_url
-      FROM rides r
-      JOIN users u ON r.user_id = u.id
-      WHERE (r.title LIKE ? OR r.start_location_name LIKE ? OR r.end_location_name LIKE ?)
-      AND r.visibility = 'public' 
-      AND r.status IN ('completed', 'active')
-      ORDER BY r.start_time DESC
-      LIMIT ? OFFSET ?
-    `, [
-      `%${searchQuery}%`,
-      `%${searchQuery}%`, 
-      `%${searchQuery}%`,
-      parseInt(limit), 
-      parseInt(offset)
-    ]);
-
-    res.json({ 
-      success: true,
-      rides: rides,
-      query: searchQuery,
-      total: rides.length
-    });
-  } catch (error) {
-    console.error('Search rides error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-}); 

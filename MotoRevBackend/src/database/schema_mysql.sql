@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS users (
     privacy_level ENUM('public', 'friends', 'private') DEFAULT 'public',
     is_verified BOOLEAN DEFAULT FALSE,
     is_premium BOOLEAN DEFAULT FALSE,
+    role ENUM('user','admin','super_admin') DEFAULT 'user',
+    subscription_tier ENUM('standard','pro') DEFAULT 'standard',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     last_active_at DATETIME,
@@ -390,4 +392,159 @@ CREATE TABLE IF NOT EXISTS maintenance_templates (
   FOREIGN KEY (bike_id) REFERENCES bikes(id) ON DELETE CASCADE,
   INDEX idx_bike_templates (bike_id),
   INDEX idx_active_templates (bike_id, is_active)
-); 
+);
+
+-- Ride Recorder - Crash telemetry recordings
+CREATE TABLE IF NOT EXISTS ride_recordings (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  ride_id BIGINT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  duration_seconds INT NOT NULL,
+  speed_series JSON NOT NULL,
+  lean_angle_series JSON,
+  acceleration_series JSON,
+  braking_series JSON,
+  gps_series JSON NOT NULL,
+  audio_sample_url TEXT,
+  notes TEXT,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (ride_id) REFERENCES rides(id) ON DELETE SET NULL,
+  INDEX idx_user_recordings (user_id, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Fuel Logs - Per-bike fuel fill-ups and MPG tracking
+CREATE TABLE IF NOT EXISTS fuel_logs (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  bike_id BIGINT,
+  log_date DATETIME NOT NULL,
+  station_name VARCHAR(200),
+  fuel_type ENUM('regular','midgrade','premium','diesel','ethanol','other') DEFAULT 'regular',
+  gallons DECIMAL(6,3) NOT NULL,
+  price_per_gallon DECIMAL(6,3) NOT NULL,
+  total_cost DECIMAL(8,2) NOT NULL,
+  odometer INT,
+  notes TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (bike_id) REFERENCES bikes(id) ON DELETE SET NULL,
+  INDEX idx_user_bike_date (user_id, bike_id, log_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci; 
+
+-- Push tokens for APNs
+CREATE TABLE IF NOT EXISTS push_tokens (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  token VARCHAR(256) NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_user_token (user_id, token),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci; 
+
+-- Subscription receipts (App Store)
+CREATE TABLE IF NOT EXISTS subscription_receipts (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  product_id VARCHAR(100) NOT NULL,
+  transaction_id VARCHAR(200),
+  payload LONGTEXT,
+  verified BOOLEAN DEFAULT FALSE,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_user_product (user_id, product_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Ride Events table
+CREATE TABLE IF NOT EXISTS ride_events (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    organizer_id BIGINT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    start_time DATETIME NOT NULL,
+    end_time DATETIME,
+    location VARCHAR(255) NOT NULL,
+    max_participants INT,
+    is_public BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (organizer_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_events_start_time (start_time),
+    INDEX idx_events_organizer (organizer_id),
+    INDEX idx_events_public (is_public)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Event Participants table
+CREATE TABLE IF NOT EXISTS event_participants (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    event_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (event_id) REFERENCES ride_events(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_participant (event_id, user_id),
+    INDEX idx_participants_event (event_id),
+    INDEX idx_participants_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Shared Music table
+CREATE TABLE IF NOT EXISTS shared_music (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    pack_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    track_title VARCHAR(255) NOT NULL,
+    artist VARCHAR(255) NOT NULL,
+    shared_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (pack_id) REFERENCES riding_packs(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_shared_music_pack (pack_id),
+    INDEX idx_shared_music_user (user_id),
+    INDEX idx_shared_music_time (shared_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Voice Sessions table
+CREATE TABLE IF NOT EXISTS voice_sessions (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    room_id VARCHAR(255) NOT NULL,
+    user_id BIGINT NOT NULL,
+    is_muted BOOLEAN DEFAULT FALSE,
+    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_room_user (room_id, user_id),
+    INDEX idx_voice_sessions_room (room_id),
+    INDEX idx_voice_sessions_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Add music and voice features to riding_packs table
+ALTER TABLE riding_packs 
+ADD COLUMN current_track VARCHAR(255) DEFAULT NULL,
+ADD COLUMN current_artist VARCHAR(255) DEFAULT NULL,
+ADD COLUMN track_updated_at TIMESTAMP DEFAULT NULL;
+
+-- Add music and voice connection status to pack_members table
+ALTER TABLE pack_members 
+ADD COLUMN is_music_connected BOOLEAN DEFAULT FALSE,
+ADD COLUMN is_voice_connected BOOLEAN DEFAULT FALSE;
+
+-- Create completed_rides table
+CREATE TABLE IF NOT EXISTS completed_rides (
+    id VARCHAR(255) PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    ride_type VARCHAR(50) NOT NULL,
+    start_time TIMESTAMP NOT NULL,
+    end_time TIMESTAMP NOT NULL,
+    duration FLOAT NOT NULL, -- in seconds
+    distance FLOAT NOT NULL, -- in meters
+    average_speed FLOAT NOT NULL, -- in mph
+    max_speed FLOAT NOT NULL, -- in mph
+    route_data TEXT, -- JSON array of route points
+    safety_score INT DEFAULT 100,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Add user statistics columns
+ALTER TABLE users ADD COLUMN total_rides INT DEFAULT 0;
+ALTER TABLE users ADD COLUMN total_miles FLOAT DEFAULT 0.0;
+ALTER TABLE users ADD COLUMN total_ride_time FLOAT DEFAULT 0.0; -- in hours 
