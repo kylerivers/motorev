@@ -91,6 +91,18 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Test endpoint to verify deployment
+app.get('/test-deploy', (req, res) => {
+  res.json({ 
+    message: 'New deployment successful',
+    timestamp: new Date().toISOString(),
+    routes: {
+      events: '/api/events',
+      rides: '/api/rides/completed'
+    }
+  });
+});
+
 // Root OK endpoint (some platforms probe '/')
 app.get('/', (req, res) => {
   res.status(200).json({ status: 'OK' });
