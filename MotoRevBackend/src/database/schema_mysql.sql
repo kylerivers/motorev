@@ -516,16 +516,16 @@ CREATE TABLE IF NOT EXISTS voice_sessions (
     INDEX idx_voice_sessions_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Add music and voice features to riding_packs table
+-- Add music and voice features to riding_packs table (only if they don't exist)
 ALTER TABLE riding_packs 
-ADD COLUMN current_track VARCHAR(255) DEFAULT NULL,
-ADD COLUMN current_artist VARCHAR(255) DEFAULT NULL,
-ADD COLUMN track_updated_at TIMESTAMP DEFAULT NULL;
+ADD COLUMN IF NOT EXISTS current_track VARCHAR(255) DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS current_artist VARCHAR(255) DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS track_updated_at TIMESTAMP DEFAULT NULL;
 
--- Add music and voice connection status to pack_members table
+-- Add music and voice connection status to pack_members table (only if they don't exist)
 ALTER TABLE pack_members 
-ADD COLUMN is_music_connected BOOLEAN DEFAULT FALSE,
-ADD COLUMN is_voice_connected BOOLEAN DEFAULT FALSE;
+ADD COLUMN IF NOT EXISTS is_music_connected BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS is_voice_connected BOOLEAN DEFAULT FALSE;
 
 -- Create completed_rides table
 CREATE TABLE IF NOT EXISTS completed_rides (
