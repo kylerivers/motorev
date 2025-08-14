@@ -82,8 +82,10 @@ else
     print_success "Already logged into Railway"
 fi
 
-# Step 4: Create Railway project
+# Step 4: Navigate to backend directory and create Railway project
 print_status "Setting up Railway project..."
+cd MotoRevBackend
+
 if [ ! -f ".railway" ]; then
     print_status "Creating new Railway project..."
     railway init
@@ -99,22 +101,20 @@ print_warning "1. Go to your Railway project"
 print_warning "2. Click 'New' → 'Database' → 'MySQL'"
 print_warning "3. Railway will auto-configure the connection"
 
-# Step 6: Set environment variables
+# Step 6: Deploy the application first to create service
+print_status "Deploying to Railway to create service..."
+railway up
+
+# Step 7: Set environment variables after service is created
 print_status "Setting up environment variables..."
 
 # Generate a secure JWT secret
 JWT_SECRET=$(openssl rand -base64 32)
 
 # Set environment variables
-railway variables set NODE_ENV=production
-railway variables set JWT_SECRET="$JWT_SECRET"
-railway variables set CORS_ORIGIN="*"
+railway variables --set "NODE_ENV=production" --set "JWT_SECRET=$JWT_SECRET" --set "CORS_ORIGIN=*"
 
 print_success "Environment variables configured"
-
-# Step 7: Deploy the application
-print_status "Deploying to Railway..."
-railway up
 
 # Step 8: Get the deployment URL
 print_status "Getting deployment URL..."

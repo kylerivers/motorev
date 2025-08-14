@@ -3,9 +3,22 @@ import CoreLocation
 import CoreMotion
 import MapKit
 import WatchConnectivity
+import UIKit
+
+class AppDelegate: NSObject, UIApplicationDelegate {
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        let token = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
+        _ = NetworkManager.shared.registerPushToken(token)
+            .sink(receiveCompletion: { _ in }, receiveValue: { _ in })
+    }
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        print("APNs registration failed: \(error)")
+    }
+}
 
 @main
 struct MotoRevApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var networkManager = NetworkManager.shared
     @StateObject private var bikeManager = BikeManager.shared
     @StateObject private var safetyManager = SafetyManager.shared
@@ -94,6 +107,13 @@ struct MotoRevApp: App {
                             .environmentObject(crashDetectionManager)
                             .environmentObject(locationSharingManager)
                             .environmentObject(weatherManager)
+                            .environmentObject(VoiceAssistantManager.shared)
+                            .environmentObject(IntercomManager.shared)
+                            .environmentObject(AIRideAssistantManager.shared)
+                            .environmentObject(PremiumManager.shared)
+                            .environmentObject(NowPlayingManager.shared)
+                            .environmentObject(PushManager.shared)
+                            .environmentObject(NFCAddManager.shared)
                             .transition(.opacity)
                     } else {
                         AuthenticationView()
@@ -106,6 +126,7 @@ struct MotoRevApp: App {
                 if isInitializing {
                     initializeApp()
                 }
+                PushManager.shared.requestAuthorization()
             }
                 .alert("Welcome to MotoRev!", isPresented: $showingWelcomeAlert) {
                     Button("Get Started") {

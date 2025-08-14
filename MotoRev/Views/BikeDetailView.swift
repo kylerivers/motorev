@@ -63,7 +63,7 @@ struct BikeDetailView: View {
                 MaintenanceView(bike: bike)
             }
             .sheet(isPresented: $showingAddModification) {
-                AddModificationView(bike: bike)
+                AddModificationInlineView(bike: bike)
             }
             .alert("Delete Bike", isPresented: $showingDeleteAlert) {
                 Button("Cancel", role: .cancel) { }
@@ -489,6 +489,64 @@ struct ModificationRow: View {
         .padding()
         .background(Color(.systemGray6))
         .cornerRadius(8)
+    }
+}
+
+// MARK: - Inline Add Modification View (scope-local to avoid symbol resolution issues)
+struct AddModificationInlineView: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var bikeManager: BikeManager
+    @State private var name: String = ""
+    @State private var descriptionText: String = ""
+    @State private var category: BikeModification.ModificationCategory = .other
+    @State private var installationDate = Date()
+    @State private var costText: String = ""
+    let bike: Bike
+
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("Basic")) {
+                    TextField("Name", text: $name)
+                    TextField("Description", text: $descriptionText, axis: .vertical)
+                }
+                Section(header: Text("Details")) {
+                    Picker("Category", selection: $category) {
+                        ForEach(BikeModification.ModificationCategory.allCases, id: \.self) { c in
+                            Text(c.displayName).tag(c)
+                        }
+                    }
+                    DatePicker("Installed", selection: $installationDate, displayedComponents: .date)
+                    TextField("Cost ($)", text: $costText).keyboardType(.decimalPad)
+                }
+            }
+            .navigationTitle("Add Modification")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") { save() }.disabled(name.isEmpty)
+                }
+            }
+        }
+    }
+
+    private func save() {
+        let fmt = DateFormatter()
+        fmt.calendar = Calendar(identifier: .gregorian)
+        fmt.locale = Locale(identifier: "en_US_POSIX")
+        fmt.dateFormat = "yyyy-MM-dd"
+        let mod = BikeModification(
+            id: UUID(),
+            name: name,
+            description: descriptionText.isEmpty ? nil : descriptionText,
+            cost: Double(costText),
+            installDate: fmt.string(from: installationDate),
+            category: category
+        )
+        _ = bikeManager.addModification(to: bike.id, modification: mod)
+            .sink(receiveCompletion: { _ in }, receiveValue: { _ in dismiss() })
     }
 }
 

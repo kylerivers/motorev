@@ -11,6 +11,7 @@ struct ProfileView: View {
     @State private var showingEditProfile = false
     @State private var showingStatistics = false
     @State private var showingEmergencyContacts = false
+    @State private var showingSafetyCenter = false
     @State private var showingLogoutAlert = false
     @State private var cancellables = Set<AnyCancellable>()
     
@@ -26,9 +27,7 @@ struct ProfileView: View {
                     // Stats overview
                     StatsOverviewView()
                     
-                    // Safety section
-                    SafetyConfigurationView()
-                    
+                    // Safety moved to dedicated screen for clarity
                     // Watch integration
                     WatchIntegrationView()
                     
@@ -38,6 +37,7 @@ struct ProfileView: View {
                         showingEditProfile: $showingEditProfile,
                         showingStatistics: $showingStatistics,
                         showingEmergencyContacts: $showingEmergencyContacts,
+                        showingSafetyCenter: $showingSafetyCenter,
                         showingLogoutAlert: $showingLogoutAlert
                     )
                 }
@@ -57,8 +57,18 @@ struct ProfileView: View {
             .onAppear {
                 // Clear notifications when profile is viewed
                 socialManager.markNotificationsAsRead()
-                // Refresh user profile data to ensure latest data is shown
-                socialManager.refreshUserProfile()
+                // Force fetch current user with role from backend
+                if networkManager.isLoggedIn {
+                    networkManager.getCurrentUserRaw()
+                        .sink(receiveCompletion: { _ in }, receiveValue: { response in
+                            SocialManager.shared.currentUserRole = response.user.role ?? SocialManager.shared.currentUserRole
+                            SocialManager.shared.currentSubscriptionTier = response.user.subscriptionTier ?? SocialManager.shared.currentSubscriptionTier
+                            SocialManager.shared.updateCurrentUserFromBackend(response.user)
+                        })
+                        .store(in: &cancellables)
+                } else {
+                    socialManager.refreshUserProfile()
+                }
             }
             .sheet(isPresented: $showingSettings) {
                 SettingsView()
@@ -71,6 +81,9 @@ struct ProfileView: View {
             }
             .sheet(isPresented: $showingEmergencyContacts) {
                 EmergencyContactsView()
+            }
+            .sheet(isPresented: $showingSafetyCenter) {
+                SafetyCenterView()
             }
             .alert("Log Out", isPresented: $showingLogoutAlert) {
                 Button("Cancel", role: .cancel) { }
@@ -111,6 +124,18 @@ struct ProfileHeaderView: View {
     @State private var showingImagePicker = false
     @State private var selectedImage: UIImage?
     @EnvironmentObject var socialManager: SocialManager
+
+    // Upload within header scope so the onChange handler resolves here
+    private func uploadProfileImage(_ image: UIImage) {
+        guard let imageData = image.jpegData(compressionQuality: 0.7) else {
+            print("❌ Failed to convert image to data")
+            return
+        }
+        let base64String = imageData.base64EncodedString()
+        // SocialManager handles networking and its own cancellables internally
+        socialManager.updateProfile(profilePicture: base64String)
+        print("📤 Requested profile image upload")
+    }
     
     var body: some View {
         VStack(spacing: 16) {
@@ -571,8 +596,13 @@ struct SettingsListView: View {
     @Binding var showingEditProfile: Bool
     @Binding var showingStatistics: Bool
     @Binding var showingEmergencyContacts: Bool
+    @Binding var showingSafetyCenter: Bool
     @Binding var showingLogoutAlert: Bool
+    @EnvironmentObject var socialManager: SocialManager
+    @State private var showAdminPanel = false
     @Environment(\.colorScheme) var colorScheme
+    
+    var isAdmin: Bool { socialManager.currentUserRole == "admin" || socialManager.currentUserRole == "super_admin" }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -582,6 +612,25 @@ struct SettingsListView: View {
                 .foregroundColor(.primary)
             
             VStack(spacing: 8) {
+                if isAdmin {
+                    SettingsRow(
+                        title: "Admin Panel",
+                        subtitle: "Manage users, roles, and subscriptions",
+                        icon: "lock.shield",
+                        action: { showAdminPanel = true }
+                    )
+                    .sheet(isPresented: $showAdminPanel) {
+                        AdminPanelView()
+                            .environmentObject(NetworkManager.shared)
+                            .environmentObject(SocialManager.shared)
+                    }
+                }
+                SettingsRow(
+                    title: "Safety",
+                    subtitle: "Crash detection, emergency, ICE",
+                    icon: "shield.checkered",
+                    action: { showingSafetyCenter = true }
+                )
                 SettingsRow(
                     title: "Edit Profile",
                     subtitle: "Update your profile information",
@@ -625,6 +674,40 @@ struct SettingsListView: View {
     
     private var adaptiveCardBackground: Color {
         colorScheme == .dark ? Color(.systemGray6) : Color(.systemBackground)
+    }
+}
+
+struct SafetyCenterView: View {
+    @EnvironmentObject var safetyManager: SafetyManager
+    @EnvironmentObject var crashDetectionManager: CrashDetectionManager
+    @EnvironmentObject var locationSharingManager: LocationSharingManager
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) var colorScheme
+
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(spacing: 16) {
+                    SafetyConfigurationView()
+                    NavigationLink("ICE Profile") { ICEScreenView() }
+                        .buttonStyle(.borderedProminent)
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Emergency Sharing").font(.headline)
+                        Toggle("Enable Emergency Sharing", isOn: .init(
+                            get: { true },
+                            set: { _ in locationSharingManager.enableEmergencySharing() }
+                        ))
+                        .tint(.red)
+                    }
+                    .padding()
+                    .background(colorScheme == .dark ? Color(.systemGray6) : Color(.systemBackground))
+                    .cornerRadius(12)
+                }
+                .padding()
+            }
+            .navigationTitle("Safety")
+            .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button("Done") { dismiss() } } }
+        }
     }
 }
 
@@ -1510,6 +1593,15 @@ struct SettingsView: View {
         NavigationView {
             Form {
                 Section(header: Text("Safety")) {
+                    Toggle("Black Box (Pro)", isOn: .init(get: { CrashDetectionManager.shared.isBlackBoxEnabled }, set: { CrashDetectionManager.shared.isBlackBoxEnabled = $0 }))
+                    Toggle("Record Audio Sample", isOn: .init(get: { CrashDetectionManager.shared.recordAudioSample }, set: { CrashDetectionManager.shared.recordAudioSample = $0 }))
+                    HStack {
+                        Text("Crash Countdown")
+                        Spacer()
+                        Stepper(value: .init(get: { CrashDetectionManager.shared.countdownSeconds }, set: { CrashDetectionManager.shared.countdownSeconds = $0 }), in: 5...120, step: 5) {
+                            Text("\(CrashDetectionManager.shared.countdownSeconds)s")
+                        }
+                    }
                     Toggle("Crash Detection", isOn: $crashDetectionEnabled)
                         .onChange(of: crashDetectionEnabled) { _, newValue in
                             if newValue {
@@ -1562,6 +1654,20 @@ struct SettingsView: View {
                             UserDefaults.standard.set(newValue, forKey: "publicProfileEnabled")
                         }
                     
+                    Toggle("Stealth Mode (no location sharing)", isOn: .init(
+                        get: { GroupRideManager.shared.isStealthModeEnabled },
+                        set: { newVal in GroupRideManager.shared.isStealthModeEnabled = newVal }
+                    ))
+                    
+                    NavigationLink("Data Control Panel") { DataControlPanelView() }
+                    NavigationLink("QR Friend") { QRFriendView() }
+                    NavigationLink("NFC Add") { NFCAddView() }
+                    Button("Write NFC Username") {
+                        if let username = SocialManager.shared.currentUser?.username {
+                            NFCAddManager.shared.writeUsername(username)
+                        }
+                    }
+                    
                     Toggle("Show Ride History", isOn: $showRideHistoryEnabled)
                         .onChange(of: showRideHistoryEnabled) { _, newValue in
                             UserDefaults.standard.set(newValue, forKey: "showRideHistoryEnabled")
@@ -1574,6 +1680,19 @@ struct SettingsView: View {
                             }
                             UserDefaults.standard.set(newValue, forKey: "locationServicesEnabled")
                         }
+                }
+                
+                Section(header: Text("Premium")) {
+                    HStack {
+                        Text("Current Tier")
+                        Spacer()
+                        Text(SocialManager.shared.currentSubscriptionTier.capitalized)
+                            .foregroundColor(.secondary)
+                    }
+                    Button("Upgrade to Pro ($3.47/mo)") {
+                        // Placeholder: trigger backend update via admin or storekit in future
+                        print("Initiate upgrade flow")
+                    }
                 }
                 
                 Section(header: Text("About")) {
@@ -1620,31 +1739,6 @@ struct SettingsView: View {
         publicProfileEnabled = UserDefaults.standard.object(forKey: "publicProfileEnabled") as? Bool ?? true
         showRideHistoryEnabled = UserDefaults.standard.bool(forKey: "showRideHistoryEnabled")
         locationServicesEnabled = UserDefaults.standard.object(forKey: "locationServicesEnabled") as? Bool ?? true
-    }
-    
-    private func uploadProfileImage(_ image: UIImage) {
-        // Convert image to base64 for upload
-        guard let imageData = image.jpegData(compressionQuality: 0.7) else {
-            print("❌ Failed to convert image to data")
-            return
-        }
-        
-        let base64String = imageData.base64EncodedString()
-        
-        // Update profile with new image
-        socialManager.updateProfile(profilePicture: base64String)
-            .receive(on: DispatchQueue.main)
-            .sink(
-                receiveCompletion: { completion in
-                    if case .failure(let error) = completion {
-                        print("❌ Failed to upload profile image: \(error)")
-                    }
-                },
-                receiveValue: { _ in
-                    print("✅ Profile image uploaded successfully")
-                }
-            )
-            .store(in: &cancellables)
     }
 }
 

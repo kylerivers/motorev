@@ -7,6 +7,37 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3B0000010000TC02 /* CachedTileOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000TC01 /* CachedTileOverlay.swift */; };
+		3B0000010000FS02 /* FuelSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000FS01 /* FuelSessionView.swift */; };
+
+		3B0000010000TR03 /* WebRTCManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000TR01 /* WebRTCManager.swift */; };
+		3B0000010000TR04 /* TileCacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000TR02 /* TileCacheManager.swift */; };
+
+		3B0000010000NV02 /* NFCAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000NV01 /* NFCAddView.swift */; };
+		3B0000010000VO02 /* VoIPManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000VO01 /* VoIPManager.swift */; };
+
+		3B0000010000SK02 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000SK01 /* SubscriptionManager.swift */; };
+		3B0000010000PU02 /* PushManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000PU01 /* PushManager.swift */; };
+
+		3B0000010000NB03 /* NearbyAddManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000NB01 /* NearbyAddManager.swift */; };
+		3B0000010000NF02 /* NFCAddManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000NF01 /* NFCAddManager.swift */; };
+
+		3B0000010000NB04 /* NearbyAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000NB02 /* NearbyAddView.swift */; };
+		3B0000010000AI02 /* AIRideAssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000AI01 /* AIRideAssistantView.swift */; };
+		3B0000010000DC02 /* DataControlPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000DC01 /* DataControlPanelView.swift */; };
+
+
+		3B0000010000WW01 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000VW01 /* PaywallView.swift */; };
+		3B0000010000WW02 /* OfflineMapsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000VW02 /* OfflineMapsView.swift */; };
+		3B0000010000WW03 /* PlanRideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000VW03 /* PlanRideView.swift */; };
+		3B0000010000WW04 /* QRFriendView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000VW04 /* QRFriendView.swift */; };
+		3B0000010000PR02 /* PremiumManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000PR01 /* PremiumManager.swift */; };
+		3B0000010000NP02 /* NowPlayingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000NP01 /* NowPlayingManager.swift */; };
+
+		3B0000010000VB01 /* VoiceAssistantManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000VA01 /* VoiceAssistantManager.swift */; };
+		3B0000010000VB02 /* IntercomManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000VA02 /* IntercomManager.swift */; };
+		3B0000010000VB03 /* AIrideAssistantManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000VA03 /* AIrideAssistantManager.swift */; };
+
 		2A1111111111AAAA /* MotoRevApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAAB /* MotoRevApp.swift */; };
 		2A1111111111AAAC /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAAD /* ContentView.swift */; };
 		2A1111111111AAAE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAAF /* Assets.xcassets */; };
@@ -42,9 +73,46 @@
 		2A1111111111AAF4 /* WeatherAlertsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAF5 /* WeatherAlertsView.swift */; };
 		2A1111111111AAF6 /* FuelFinderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAF7 /* FuelFinderView.swift */; };
 		2A1111111111AAF8 /* AddModificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AAF9 /* AddModificationView.swift */; };
+		2A1111111111AB10 /* SharedComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111111111AB11 /* SharedComponents.swift */; };
+		2A2222222222AC10 /* AdminPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A2222222222AC11 /* AdminPanelView.swift */; };
+		3B0000010000GR02 /* GroupRideBrowseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000GR01 /* GroupRideBrowseView.swift */; };
+		3B0000010000GV02 /* GroupVoiceChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000GV01 /* GroupVoiceChatView.swift */; };
+		3B0000010000RE02 /* RideEventsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000RE01 /* RideEventsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		3B0000010000TC01 /* CachedTileOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedTileOverlay.swift; sourceTree = "<group>"; };
+		3B0000010000FS01 /* FuelSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelSessionView.swift; sourceTree = "<group>"; };
+
+		3B0000010000TR01 /* WebRTCManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebRTCManager.swift; sourceTree = "<group>"; };
+		3B0000010000TR02 /* TileCacheManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TileCacheManager.swift; sourceTree = "<group>"; };
+
+		3B0000010000NV01 /* NFCAddView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NFCAddView.swift; sourceTree = "<group>"; };
+		3B0000010000VO01 /* VoIPManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoIPManager.swift; sourceTree = "<group>"; };
+
+		3B0000010000NF01 /* NFCAddManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotoRev/Managers/NFCAddManager.swift; sourceTree = SOURCE_ROOT; };
+
+
+		3B0000010000SK01 /* SubscriptionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionManager.swift; sourceTree = "<group>"; };
+		3B0000010000PU01 /* PushManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushManager.swift; sourceTree = "<group>"; };
+
+		3B0000010000NB01 /* NearbyAddManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyAddManager.swift; sourceTree = "<group>"; };
+		3B0000010000NB02 /* NearbyAddView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyAddView.swift; sourceTree = "<group>"; };
+		3B0000010000AI01 /* AIRideAssistantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIRideAssistantView.swift; sourceTree = "<group>"; };
+		3B0000010000DC01 /* DataControlPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataControlPanelView.swift; sourceTree = "<group>"; };
+
+
+		3B0000010000PR01 /* PremiumManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumManager.swift; sourceTree = "<group>"; };
+		3B0000010000NP01 /* NowPlayingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingManager.swift; sourceTree = "<group>"; };
+		3B0000010000VW01 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
+		3B0000010000VW02 /* OfflineMapsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineMapsView.swift; sourceTree = "<group>"; };
+		3B0000010000VW03 /* PlanRideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanRideView.swift; sourceTree = "<group>"; };
+		3B0000010000VW04 /* QRFriendView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRFriendView.swift; sourceTree = "<group>"; };
+
+		3B0000010000VA01 /* VoiceAssistantManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceAssistantManager.swift; sourceTree = "<group>"; };
+		3B0000010000VA02 /* IntercomManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntercomManager.swift; sourceTree = "<group>"; };
+		3B0000010000VA03 /* AIrideAssistantManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIrideAssistantManager.swift; sourceTree = "<group>"; };
+
 		2A1111111111AAA8 /* MotoRev.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MotoRev.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2A1111111111AAAB /* MotoRevApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotoRevApp.swift; sourceTree = "<group>"; };
 		2A1111111111AAAD /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -81,6 +149,11 @@
 		2A1111111111AAF5 /* WeatherAlertsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherAlertsView.swift; sourceTree = "<group>"; };
 		2A1111111111AAF7 /* FuelFinderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelFinderView.swift; sourceTree = "<group>"; };
 		2A1111111111AAF9 /* AddModificationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddModificationView.swift; sourceTree = "<group>"; };
+		2A1111111111AB11 /* SharedComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedComponents.swift; sourceTree = "<group>"; };
+		2A2222222222AC11 /* AdminPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminPanelView.swift; sourceTree = "<group>"; };
+		3B0000010000GR01 /* GroupRideBrowseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupRideBrowseView.swift; sourceTree = "<group>"; };
+		3B0000010000GV01 /* GroupVoiceChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupVoiceChatView.swift; sourceTree = "<group>"; };
+		3B0000010000RE01 /* RideEventsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideEventsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -146,6 +219,19 @@
 				2A1111111111AAE5 /* BikeManager.swift */,
 				2A1111111111AAF1 /* GroupRideManager.swift */,
 				2A1111111111AAF3 /* WeatherManager.swift */,
+				3B0000010000VA01 /* VoiceAssistantManager.swift */,
+				3B0000010000VA02 /* IntercomManager.swift */,
+				3B0000010000VA03 /* AIrideAssistantManager.swift */,
+				3B0000010000PR01 /* PremiumManager.swift */,
+				3B0000010000NP01 /* NowPlayingManager.swift */,
+				3B0000010000NB01 /* NearbyAddManager.swift */,
+				3B0000010000PU01 /* PushManager.swift */,
+				3B0000010000SK01 /* SubscriptionManager.swift */,
+				3B0000010000VO01 /* VoIPManager.swift */,
+				3B0000010000TR02 /* TileCacheManager.swift */,
+				3B0000010000TC01 /* CachedTileOverlay.swift */,
+				3B0000010000TR01 /* WebRTCManager.swift */,
+				3B0000010000NF01 /* NFCAddManager.swift */
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -172,6 +258,19 @@
 				2A1111111111AAF5 /* WeatherAlertsView.swift */,
 				2A1111111111AAF7 /* FuelFinderView.swift */,
 				2A1111111111AAF9 /* AddModificationView.swift */,
+				2A1111111111AB11 /* SharedComponents.swift */,
+				2A2222222222AC11 /* AdminPanelView.swift */,
+				3B0000010000NV01 /* NFCAddView.swift */,
+				3B0000010000NB02 /* NearbyAddView.swift */,
+				3B0000010000AI01 /* AIRideAssistantView.swift */,
+				3B0000010000VW01 /* PaywallView.swift */,
+				3B0000010000VW02 /* OfflineMapsView.swift */,
+				3B0000010000VW03 /* PlanRideView.swift */,
+				3B0000010000VW04 /* QRFriendView.swift */,
+				3B0000010000DC01 /* DataControlPanelView.swift */
+				,3B0000010000GR01 /* GroupRideBrowseView.swift */
+				,3B0000010000GV01 /* GroupVoiceChatView.swift */
+				,3B0000010000RE01 /* RideEventsView.swift */
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -286,6 +385,32 @@
 				2A1111111111AAF4 /* WeatherAlertsView.swift in Sources */,
 				2A1111111111AAF6 /* FuelFinderView.swift in Sources */,
 				2A1111111111AAAA /* MotoRevApp.swift in Sources */,
+				2A1111111111AB10 /* SharedComponents.swift in Sources */,
+				2A2222222222AC10 /* AdminPanelView.swift in Sources */,
+				3B0000010000PR02 /* PremiumManager.swift in Sources */,
+				3B0000010000NP02 /* NowPlayingManager.swift in Sources */,
+				3B0000010000WW01 /* PaywallView.swift in Sources */,
+				3B0000010000WW02 /* OfflineMapsView.swift in Sources */,
+				3B0000010000WW03 /* PlanRideView.swift in Sources */,
+				3B0000010000WW04 /* QRFriendView.swift in Sources */,
+				3B0000010000NB03 /* NearbyAddManager.swift in Sources */,
+				3B0000010000NB04 /* NearbyAddView.swift in Sources */,
+				3B0000010000AI02 /* AIRideAssistantView.swift in Sources */,
+				3B0000010000SK02 /* SubscriptionManager.swift in Sources */,
+				3B0000010000PU02 /* PushManager.swift in Sources */,
+				3B0000010000NV02 /* NFCAddView.swift in Sources */,
+				3B0000010000VO02 /* VoIPManager.swift in Sources */,
+				3B0000010000TR03 /* WebRTCManager.swift in Sources */,
+				3B0000010000TR04 /* TileCacheManager.swift in Sources */,
+				3B0000010000TC02 /* CachedTileOverlay.swift in Sources */,
+				3B0000010000VB01 /* VoiceAssistantManager.swift in Sources */,
+				3B0000010000VB02 /* IntercomManager.swift in Sources */,
+				3B0000010000VB03 /* AIrideAssistantManager.swift in Sources */,
+				3B0000010000NF02 /* NFCAddManager.swift in Sources */,
+				3B0000010000DC02 /* DataControlPanelView.swift in Sources */,
+				3B0000010000GR02 /* GroupRideBrowseView.swift in Sources */,
+				3B0000010000GV02 /* GroupVoiceChatView.swift in Sources */,
+				3B0000010000RE02 /* RideEventsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

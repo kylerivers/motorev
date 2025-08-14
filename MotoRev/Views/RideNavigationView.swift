@@ -113,6 +113,16 @@ struct RideNavigationView: View {
                     routeProgress: routeProgress
                 )
                 
+                if let shared = groupRideManager.sharedRoute,
+                   let myLoc = locationManager.location?.coordinate,
+                   groupRideManager.detectDeviation(current: myLoc, route: shared.waypoints) {
+                    Text("⚠️ You are deviating from shared route")
+                        .font(.caption)
+                        .padding(6)
+                        .background(Color.yellow.opacity(0.9))
+                        .cornerRadius(8)
+                }
+                
                 Spacer()
                 
                 // Bottom controls
@@ -133,6 +143,26 @@ struct RideNavigationView: View {
                     }
                     
                     Spacer()
+                    
+                    // Voice assistant
+                    Button(action: { VoiceAssistantManager.shared.startListening() }) {
+                        Image(systemName: "mic.fill")
+                            .padding()
+                            .background(Color.gray.opacity(0.8))
+                            .foregroundColor(.white)
+                            .cornerRadius(25)
+                            .shadow(radius: 4)
+                    }
+                    
+                    // Share route (leader)
+                    Button(action: { groupRideManager.shareCurrentRoute() }) {
+                        Image(systemName: "square.and.arrow.up")
+                            .padding()
+                            .background(Color.blue.opacity(0.8))
+                            .foregroundColor(.white)
+                            .cornerRadius(25)
+                            .shadow(radius: 4)
+                    }
                     
                     // Voice toggle
                     Button(action: { isVoiceEnabled.toggle() }) {

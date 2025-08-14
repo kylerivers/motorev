@@ -25,45 +25,8 @@ struct ContentView: View {
                     }
                     .tag(0)
                 
-                // Navigate - GPS, routes, weather
-                NavigationView {
-                    VStack {
-                        // Main map view
-                        MapView()
-                        
-                        // Navigation quick actions
-                        HStack(spacing: 20) {
-                            Button(action: { showingWeatherAlerts = true }) {
-                                VStack {
-                                    Image(systemName: "cloud.rain.fill")
-                                    Text("Weather")
-                                        .font(.caption)
-                                }
-                                .foregroundColor(.blue)
-                            }
-                            
-                            Button(action: { showingFuelFinder = true }) {
-                                VStack {
-                                    Image(systemName: "fuelpump.fill")
-                                    Text("Fuel")
-                                        .font(.caption)
-                                }
-                                .foregroundColor(.orange)
-                            }
-                            
-                            Button(action: { }) {
-                                VStack {
-                                    Image(systemName: "location.circle.fill")
-                                    Text("Routes")
-                                        .font(.caption)
-                                }
-                                .foregroundColor(.green)
-                            }
-                        }
-                        .padding()
-                        .background(Color(.systemGray6))
-                    }
-                }
+                // Navigate - Clean unified interface
+                MapView()
                 .tabItem {
                     Image(systemName: "map.fill")
                     Text("Navigate")

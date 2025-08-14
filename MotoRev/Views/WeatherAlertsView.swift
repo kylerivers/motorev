@@ -2,11 +2,20 @@ import SwiftUI
 import CoreLocation
 import MapKit
 
+extension Array {
+    func uniqued<T: Hashable>(by keyPath: KeyPath<Element, T>) -> [Element] {
+        var seen = Set<T>()
+        return self.filter { seen.insert($0[keyPath: keyPath]).inserted }
+    }
+}
+
 struct WeatherAlertsView: View {
     @EnvironmentObject var locationManager: LocationManager
     @EnvironmentObject var weatherManager: WeatherManager
+    @EnvironmentObject var socialManager: SocialManager
     @ObservedObject var hazardDetectionManager = HazardDetectionManager.shared
     @State private var isLoading = true
+    @State private var locationName = "Current Location"
     
     var body: some View {
         NavigationView {
@@ -18,15 +27,28 @@ struct WeatherAlertsView: View {
                             HStack {
                                 Image(systemName: "location.fill")
                                     .foregroundColor(.green)
-                                Text("Current Location")
-                                    .font(.caption)
-                                    .foregroundColor(.green)
+                                Text(locationName)
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(.primary)
+                                Spacer()
+                                Button(action: refreshWeatherData) {
+                                    Image(systemName: "arrow.clockwise")
+                                        .foregroundColor(.blue)
+                                }
                             }
                             
                             Text("Lat: \(String(format: "%.4f", location.coordinate.latitude)), Lng: \(String(format: "%.4f", location.coordinate.longitude))")
                                 .font(.caption2)
                                 .foregroundColor(.secondary)
+                            
+                            Text("Last updated: \(Date(), formatter: timeFormatter)")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
                         }
+                        .padding()
+                        .background(Color.green.opacity(0.1))
+                        .cornerRadius(8)
                         .padding(.horizontal)
                     }
                     
@@ -52,17 +74,42 @@ struct WeatherAlertsView: View {
                         .padding()
                     }
                     
-                    // Active Weather Alerts
-                    if !weatherManager.weatherAlerts.isEmpty {
+                    // Active Weather Alerts  
+                    let uniqueAlerts = weatherManager.weatherAlerts.uniqued(by: \.id)
+                    if !uniqueAlerts.isEmpty {
                         VStack(alignment: .leading, spacing: 10) {
-                            Text("Active Weather Alerts")
-                                .font(.headline)
-                                .fontWeight(.bold)
+                            HStack {
+                                Text("Active Weather Alerts")
+                                    .font(.headline)
+                                    .fontWeight(.bold)
+                                Spacer()
+                                Text("\(uniqueAlerts.count) alert\(uniqueAlerts.count == 1 ? "" : "s")")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
                             
-                            ForEach(weatherManager.weatherAlerts, id: \.id) { alert in
-                                WeatherAlertCard(alert: alert)
+                            ForEach(uniqueAlerts, id: \.id) { alert in
+                                WeatherAlertCard(
+                                    alert: alert,
+                                    onShare: { shareAlert(alert) }
+                                )
                             }
                         }
+                    } else {
+                        VStack(spacing: 8) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 40))
+                                .foregroundColor(.green)
+                            Text("No Active Alerts")
+                                .font(.headline)
+                                .foregroundColor(.green)
+                            Text("Weather conditions are safe for riding")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding()
+                        .background(Color.green.opacity(0.1))
+                        .cornerRadius(8)
                     }
                     
                     // Weather Radar/Map Integration
@@ -94,11 +141,104 @@ struct WeatherAlertsView: View {
         }
         
         // WeatherManager automatically fetches weather based on location
-        // Just need to trigger a manual fetch if needed
         weatherManager.fetchWeatherData(for: location.coordinate)
+        
+        // Get location name
+        getLocationName(for: location.coordinate)
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             self.isLoading = false
+        }
+    }
+    
+    private func refreshWeatherData() {
+        guard let location = locationManager.location else { return }
+        
+        // Clear existing alerts to prevent duplicates
+        weatherManager.clearAllAlerts()
+        
+        // Fetch fresh data
+        weatherManager.fetchWeatherData(for: location.coordinate)
+        getLocationName(for: location.coordinate)
+        
+        // Haptic feedback
+        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+        impactFeedback.impactOccurred()
+    }
+    
+    private func getLocationName(for coordinate: CLLocationCoordinate2D) {
+        let geocoder = CLGeocoder()
+        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        
+        geocoder.reverseGeocodeLocation(location) { placemarks, error in
+            if let placemark = placemarks?.first {
+                DispatchQueue.main.async {
+                    if let city = placemark.locality, let state = placemark.administrativeArea {
+                        self.locationName = "\(city), \(state)"
+                    } else if let name = placemark.name {
+                        self.locationName = name
+                    }
+                }
+            }
+        }
+    }
+    
+    private func shareAlert(_ alert: WeatherAlert) {
+        let alertTitle = alertTitle(for: alert.type)
+        let severityText = severityString(for: alert.severity)
+        
+        let postContent = """
+        🌦️ Weather Alert: \(alertTitle)
+        
+        📍 Location: \(locationName)
+        ⚠️ Severity: \(severityText)
+        
+        \(alert.description)
+        
+        #WeatherAlert #MotoRev #RideSafe
+        """
+        
+        // Create a post using SocialManager
+        print("Sharing weather alert: \(postContent)")
+        // TODO: Implement actual social post creation when SocialManager method is available
+        
+        // Show success feedback for now
+        let notificationFeedback = UINotificationFeedbackGenerator()
+        notificationFeedback.notificationOccurred(.success)
+    }
+    
+    private func alertTitle(for type: WeatherAlertType) -> String {
+        switch type {
+        case .rain, .precipitation:
+            return "Rain Alert"
+        case .wind, .strongWinds:
+            return "Wind Alert"
+        case .temperature, .temperatureExtreme:
+            return "Temperature Alert"
+        case .visibility, .lowVisibility:
+            return "Visibility Alert"
+        case .severe:
+            return "Severe Weather Alert"
+        }
+    }
+    
+    private var timeFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        formatter.dateStyle = .none
+        return formatter
+    }
+    
+    private func severityString(for severity: AlertSeverity) -> String {
+        switch severity {
+        case .low:
+            return "Low"
+        case .medium, .moderate:
+            return "Medium"
+        case .high, .severe:
+            return "High"
+        case .critical:
+            return "Critical"
         }
     }
 }
@@ -173,28 +313,37 @@ struct WeatherDetailItem: View {
 
 struct WeatherAlertCard: View {
     let alert: WeatherAlert
+    let onShare: () -> Void
     
     var body: some View {
-        HStack {
-            Image(systemName: alertIcon(for: alert.type))
-                .font(.title2)
-                .foregroundColor(alertColor(for: alert.severity))
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(alertTitle(for: alert.type))
-                    .font(.headline)
-                    .fontWeight(.semibold)
+        VStack(spacing: 8) {
+            HStack {
+                Image(systemName: alertIcon(for: alert.type))
+                    .font(.title2)
+                    .foregroundColor(alertColor(for: alert.severity))
                 
-                Text(alert.description)
-                    .font(.body)
-                    .foregroundColor(.secondary)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(alertTitle(for: alert.type))
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                    
+                    Text(alert.description)
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                    
+                    Text("Active since: \(alert.timestamp, formatter: dateFormatter)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
                 
-                Text("Active since: \(alert.timestamp, formatter: dateFormatter)")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                Spacer()
+                
+                Button(action: onShare) {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.title3)
+                        .foregroundColor(.blue)
+                }
             }
-            
-            Spacer()
         }
         .padding()
         .background(alertColor(for: alert.severity).opacity(0.1))
@@ -264,7 +413,7 @@ struct WeatherMapView: View {
     )
     
     var body: some View {
-        Map(coordinateRegion: $region)
+        Map(position: .constant(.region(region)))
             .overlay(
                 VStack {
                     HStack {
@@ -310,18 +459,28 @@ struct WeatherRideRecommendations: View {
                 .fontWeight(.bold)
             
             if let weather = weather {
+                let ambientF = weather.temperature
+                let mph = LocationManager.shared.currentRideSpeed
+                let feels = WeatherManager.shared.computeWindChillF(ambientF: ambientF, mph: mph)
+                
                 VStack(spacing: 8) {
                     RecommendationItem(
                         icon: "thermometer",
-                        title: "Temperature",
-                        recommendation: temperatureRecommendation(weather.temperature)
+                        title: "Ambient vs Feels Like",
+                        recommendation: String(format: "%.0f°F feels like %.0f°F at %.0f mph", ambientF, feels, mph)
                     )
-                    
-                    RecommendationItem(
-                        icon: "wind",
-                        title: "Wind Conditions",
-                        recommendation: windRecommendation(weather.windSpeed)
-                    )
+                    if PremiumManager.shared.isPremium {
+                        let gear = WeatherManager.shared.gearSuggestion(ambientF: ambientF, mph: mph)
+                        RecommendationItem(
+                            icon: "tshirt",
+                            title: "Gear",
+                            recommendation: gear
+                        )
+                    } else {
+                        NavigationLink(destination: PaywallView()) {
+                            HStack { Image(systemName: "star.fill"); Text("Unlock Gear Recommendations") }
+                        }
+                    }
                     
                     if !alerts.isEmpty {
                         RecommendationItem(

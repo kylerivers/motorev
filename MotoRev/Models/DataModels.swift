@@ -2,6 +2,7 @@ import Foundation
 import CoreLocation
 import SwiftUI
 
+
 // MARK: - User Model
 struct User: Identifiable, Codable {
     let id: UUID
@@ -69,6 +70,8 @@ struct BackendUser: Codable {
     let isVerified: Bool?
     let createdAt: String
     let updatedAt: String
+    let role: String?
+    let subscriptionTier: String?
     
     func toUser() -> User {
         return User(
@@ -761,10 +764,17 @@ struct Badge: Identifiable, Codable {
 
 // MARK: - Navigation Models
 struct NavigationInstruction: Identifiable, Codable {
-    let id = UUID()
+    let id: UUID
     let text: String
     let distance: Double
     let maneuver: ManeuverType
+    
+    init(text: String, distance: Double, maneuver: ManeuverType) {
+        self.id = UUID()
+        self.text = text
+        self.distance = distance
+        self.maneuver = maneuver
+    }
     
     enum ManeuverType: String, Codable {
         case straight = "straight"
@@ -1510,7 +1520,6 @@ struct CreateModificationRequest: Codable {
 }
 
 struct BikesResponse: Codable {
-    let success: Bool
     let bikes: [Bike]
 }
 
@@ -1622,4 +1631,300 @@ struct OpenMeteoCurrentWeather: Codable {
     let wind_speed_10m: Double
     let wind_direction_10m: Int
     let weather_code: Int
+}
+
+// MARK: - Fuel Logs API Models
+struct CreateFuelLogRequest: Codable {
+    let bikeId: Int?
+    let date: String // ISO8601
+    let stationName: String?
+    let fuelType: String?
+    let gallons: Double
+    let pricePerGallon: Double
+    let totalCost: Double
+    let odometer: Int?
+    let notes: String?
+}
+
+struct FuelLogItem: Codable, Identifiable {
+    let id: Int
+    let userId: Int
+    let bikeId: Int?
+    let logDate: String
+    let stationName: String?
+    let fuelType: String
+    let gallons: Double
+    let pricePerGallon: Double
+    let totalCost: Double
+    let odometer: Int?
+    let notes: String?
+    
+    // Convenience properties for UI
+    var displayStationName: String {
+        return stationName ?? "Unknown Station"
+    }
+    
+    var timestamp: Date {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+        return formatter.date(from: logDate) ?? Date()
+    }
+    
+    // Create a new fuel log for local storage
+    static func createLocal(stationName: String, fuelType: String, gallons: Double, pricePerGallon: Double, notes: String? = nil) -> FuelLogItem {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+        
+        return FuelLogItem(
+            id: Int.random(in: 100000...999999), // Temporary local ID
+            userId: 0, // Placeholder
+            bikeId: nil,
+            logDate: formatter.string(from: Date()),
+            stationName: stationName,
+            fuelType: fuelType,
+            gallons: gallons,
+            pricePerGallon: pricePerGallon,
+            totalCost: gallons * pricePerGallon,
+            odometer: nil,
+            notes: notes
+        )
+    }
+}
+
+// FuelLogItem is the standard fuel log structure used across the app
+
+struct FuelLogsResponse: Codable {
+    let fuelLogs: [FuelLogItem]
+}
+
+struct FuelLogResponse: Codable {
+    let fuelLog: FuelLogItem
+}
+
+// MARK: - Ride Recorder API Models
+struct CreateRideRecordingRequest: Codable {
+    let rideId: String?
+    let durationSeconds: Int
+    let speedSeries: [Double]
+    let leanAngleSeries: [Double]?
+    let accelerationSeries: [Double]?
+    let brakingSeries: [Double]?
+    let gpsSeries: [[Double]] // [[lat, lng, timestampSec]]
+    let audioSampleUrl: String?
+    let notes: String?
+}
+
+struct RideRecordingItem: Codable, Identifiable {
+    let id: String
+    let userId: String
+    let rideId: String?
+    let createdAt: String
+    let durationSeconds: Int
+    let speedSeries: [Double]
+    let leanAngleSeries: [Double]?
+    let accelerationSeries: [Double]?
+    let brakingSeries: [Double]?
+    let gpsSeries: [[Double]]
+    let audioSampleUrl: String?
+    let notes: String?
+}
+
+struct RideRecordingsResponse: Codable {
+    let recordings: [RideRecordingItem]
+}
+
+struct RideRecordingResponse: Codable {
+    let recording: RideRecordingItem
+}
+
+// MARK: - Safety Emergency API Models
+struct EmergencyReportRequest: Codable {
+    let type: String // 'crash','breakdown','medical','weather','manual'
+    let severity: String // 'low','medium','high','critical'
+    let location: EmergencyLocation
+    let description: String?
+    let automaticDetection: Bool?
+    let sensorData: [String: Double]? // simple flattened metrics
+    let ice: EmergencyICEPayload? // optional ICE payload for responders
+}
+
+struct EmergencyLocation: Codable {
+    let latitude: Double
+    let longitude: Double
+}
+
+struct EmergencyReportResponse: Codable {
+    let message: String?
+}
+
+// MARK: - ICE Payload (In Case of Emergency)
+struct EmergencyICEPayload: Codable {
+    let bloodType: String?
+    let allergies: [String]?
+    let medications: [String]?
+    let medicalID: String?
+    let conditions: [String]?
+    let emergencyNotes: String?
+}
+
+// MARK: - Ride Events API Models
+struct BackendRideEvent: Codable {
+    let id: Int
+    let title: String
+    let description: String?
+    let start_time: String
+    let end_time: String?
+    let location: String
+    let organizer_username: String
+    let participant_count: Int
+    let max_participants: Int?
+    let is_public: Bool
+    let is_participating: Int
+}
+
+struct EventsResponse: Codable {
+    let events: [BackendRideEvent]
+}
+
+struct EventResponse: Codable {
+    let event: BackendRideEvent
+}
+
+struct CreateEventRequest: Codable {
+    let title: String
+    let description: String?
+    let start_time: String
+    let end_time: String?
+    let location: String
+    let max_participants: Int?
+    let is_public: Bool
+}
+
+struct CreateEventResponse: Codable {
+    let message: String
+    let eventId: Int
+}
+
+// MARK: - Group Music API Models
+struct MusicSessionResponse: Codable {
+    let session: MusicSession
+}
+
+struct MusicSession: Codable {
+    let id: String
+    let groupId: String
+    let currentTrack: String?
+    let currentArtist: String?
+    let isPlaying: Bool
+    let participants: [String]
+}
+
+struct ShareMusicRequest: Codable {
+    let trackTitle: String
+    let artist: String
+    let groupId: String
+}
+
+// MARK: - Completed Rides Models
+
+struct CompletedRideData: Identifiable {
+    let id: String
+    let rideType: RideType
+    let startTime: Date
+    let endTime: Date
+    let duration: TimeInterval
+    let distance: CLLocationDistance
+    let averageSpeed: Double
+    let maxSpeed: Double
+    let route: [CLLocation]
+    let participants: [RideParticipant]
+    let safetyScore: Int
+    
+    var distanceInMiles: Double {
+        distance * 0.000621371
+    }
+    
+    var formattedDuration: String {
+        let hours = Int(duration) / 3600
+        let minutes = Int(duration.truncatingRemainder(dividingBy: 3600)) / 60
+        
+        if hours > 0 {
+            return "\(hours)h \(minutes)m"
+        } else {
+            return "\(minutes)m"
+        }
+    }
+    
+    var formattedDate: String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: startTime)
+    }
+}
+
+// Custom Codable implementation for CompletedRideData
+extension CompletedRideData: Codable {
+    private enum CodingKeys: String, CodingKey {
+        case id, rideType, startTime, endTime, duration, distance
+        case averageSpeed, maxSpeed, route, participants, safetyScore
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(rideType.rawValue, forKey: .rideType)
+        try container.encode(startTime, forKey: .startTime)
+        try container.encode(endTime, forKey: .endTime)
+        try container.encode(duration, forKey: .duration)
+        try container.encode(distance, forKey: .distance)
+        try container.encode(averageSpeed, forKey: .averageSpeed)
+        try container.encode(maxSpeed, forKey: .maxSpeed)
+        try container.encode(safetyScore, forKey: .safetyScore)
+        try container.encode(participants, forKey: .participants)
+        
+        // Convert CLLocation array to coordinate pairs
+        let routeCoordinates = route.map { location in
+            ["lat": location.coordinate.latitude, "lng": location.coordinate.longitude]
+        }
+        try container.encode(routeCoordinates, forKey: .route)
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        
+        let rideTypeString = try container.decode(String.self, forKey: .rideType)
+        guard let decodedRideType = RideType(rawValue: rideTypeString) else {
+            throw DecodingError.dataCorruptedError(forKey: .rideType, in: container, debugDescription: "Invalid ride type: \(rideTypeString)")
+        }
+        rideType = decodedRideType
+        
+        startTime = try container.decode(Date.self, forKey: .startTime)
+        endTime = try container.decode(Date.self, forKey: .endTime)
+        duration = try container.decode(TimeInterval.self, forKey: .duration)
+        distance = try container.decode(CLLocationDistance.self, forKey: .distance)
+        averageSpeed = try container.decode(Double.self, forKey: .averageSpeed)
+        maxSpeed = try container.decode(Double.self, forKey: .maxSpeed)
+        safetyScore = try container.decode(Int.self, forKey: .safetyScore)
+        participants = try container.decode([RideParticipant].self, forKey: .participants)
+        
+        // Convert coordinate pairs back to CLLocation array
+        let routeCoordinates = try container.decode([[String: Double]].self, forKey: .route)
+        route = routeCoordinates.compactMap { coord in
+            guard let lat = coord["lat"], let lng = coord["lng"] else { return nil }
+            return CLLocation(latitude: lat, longitude: lng)
+        }
+    }
+}
+
+struct RideParticipant: Identifiable, Codable {
+    let id: String
+    let username: String
+    let name: String
+    let isCurrentUser: Bool
+}
+
+struct CompletedRidesResponse: Codable {
+    let rides: [CompletedRideData]
 }

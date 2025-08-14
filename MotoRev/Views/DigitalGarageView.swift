@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 struct DigitalGarageView: View {
     @EnvironmentObject var bikeManager: BikeManager
@@ -26,6 +27,9 @@ struct DigitalGarageView: View {
                     
                     // Quick actions
                     quickActionsSection
+                    NavigationLink("View Friend's Garage") {
+                        ViewFriendsGarageView()
+                    }
                 }
                 .padding()
             }
@@ -362,6 +366,75 @@ struct QuickActionButton: View {
         }
         .buttonStyle(PlainButtonStyle())
     }
+}
+
+struct ViewFriendsGarageView: View {
+    @State private var username: String = ""
+    @State private var bikes: [Bike] = []
+    @State private var isLoading = false
+    @State private var errorMessage: String?
+    
+    var body: some View {
+        Form {
+            Section(header: Text("Friend")) {
+                HStack {
+                    TextField("Username", text: $username)
+                    Button("Load") { load() }
+                        .disabled(username.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+            }
+            if isLoading { ProgressView() }
+            if let errorMessage { Text(errorMessage).foregroundColor(.red) }
+            Section(header: Text("Bikes")) {
+                if bikes.isEmpty {
+                    Text("No bikes found")
+                } else {
+                    ForEach(bikes) { bike in
+                        VStack(alignment: .leading) {
+                            Text(bike.name).font(.headline)
+                            Text([bike.make, bike.model].compactMap { $0 }.joined(separator: " "))
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+            }
+        }
+        .navigationTitle("Friend's Garage")
+    }
+    
+    private func load() {
+        isLoading = true
+        errorMessage = nil
+        let cleaned = username.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "@", with: "")
+        NetworkManager.shared.getUserByUsername(cleaned)
+            .flatMap { resp in
+                NetworkManager.shared.getBikes(for: resp.user.id)
+            }
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { completion in
+                isLoading = false
+                if case .failure(let error) = completion {
+                    let message = error.localizedDescription
+                    if message.contains("HTTP 404") {
+                        // User not found
+                        self.bikes = []
+                        self.errorMessage = "User not found"
+                    } else if message.contains("HTTP 500") {
+                        // Backend error – present friendly message and empty list
+                        self.bikes = []
+                        self.errorMessage = "Unable to load garage right now. Please try again later."
+                    } else {
+                        self.errorMessage = message
+                    }
+                }
+            }, receiveValue: { bikes in
+                self.bikes = bikes
+            })
+            .store(in: &cancellables)
+    }
+    
+    @State private var cancellables = Set<AnyCancellable>()
 }
 
 #Preview {

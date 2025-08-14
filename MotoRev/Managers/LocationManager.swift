@@ -146,6 +146,11 @@ class LocationManager: NSObject, ObservableObject {
         // Start location updates
         startLocationUpdates()
         
+        // Pre-ride weather check
+        if let coord = location?.coordinate {
+            WeatherManager.shared.fetchWeatherData(for: coord)
+        }
+        
         // Start ride timer for duration tracking
         startRideTimer()
         
@@ -215,32 +220,19 @@ class LocationManager: NSObject, ObservableObject {
     
     private func createRideInBackend() {
         guard let currentLocation = location else { return }
-        
-        // Create ride record in backend
-        let requestBody = [
-            "title": "Solo Ride",
-            "startLocation": "\(currentLocation.coordinate.latitude),\(currentLocation.coordinate.longitude)"
-        ]
-        
-        // Convert to JSON
-        guard let jsonData = try? JSONSerialization.data(withJSONObject: requestBody) else { return }
-        
-        // Make request to backend
+        let startLocation = "\(currentLocation.coordinate.latitude),\(currentLocation.coordinate.longitude)"
         var request = URLRequest(url: URL(string: "\(networkManager.baseURL)/rides/start")!)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer test-token-for-development", forHTTPHeaderField: "Authorization")
-        request.httpBody = jsonData
-        
-        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+        if let token = networkManager.authToken { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
+        let body: [String: Any?] = ["title": "Solo Ride", "startLocation": startLocation]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body.compactMapValues { $0 })
+        URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
             if let data = data,
                let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                let ride = json["ride"] as? [String: Any],
                let rideId = ride["id"] as? Int {
-                DispatchQueue.main.async {
-                    self?.currentActiveRideId = rideId
-                    print("✅ Created ride with ID: \(rideId)")
-                }
+                DispatchQueue.main.async { self?.currentActiveRideId = rideId }
             } else {
                 print("❌ Failed to create ride: \(error?.localizedDescription ?? "Unknown error")")
             }
@@ -248,43 +240,15 @@ class LocationManager: NSObject, ObservableObject {
     }
     
     private func saveRideToBackend(startTime: Date, endTime: Date, totalDuration: TimeInterval) {
-        guard let rideId = currentActiveRideId else {
-            print("❌ No active ride ID to save")
-            return
-        }
-        
-        let distanceInMiles = currentRideDistance * 0.000621371 // Convert meters to miles
+        guard let rideId = currentActiveRideId else { print("❌ No active ride ID to save"); return }
+        let distanceInMiles = currentRideDistance * 0.000621371
         let durationInMinutes = Int(totalDuration / 60)
-        
-        let requestBody = [
-            "endLocation": routePoints.last?.coordinate != nil ? 
-                "\(routePoints.last!.coordinate.latitude),\(routePoints.last!.coordinate.longitude)" : nil,
-            "totalDistance": distanceInMiles,
-            "maxSpeed": currentRideMaxSpeed,
-            "avgSpeed": currentRideAverageSpeed,
-            "durationMinutes": durationInMinutes
-        ] as [String: Any?]
-        
-        guard let jsonData = try? JSONSerialization.data(withJSONObject: requestBody.compactMapValues { $0 }) else { return }
-        
-        var request = URLRequest(url: URL(string: "\(networkManager.baseURL)/rides/\(rideId)/end")!)
-        request.httpMethod = "PUT"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer test-token-for-development", forHTTPHeaderField: "Authorization")
-        request.httpBody = jsonData
-        
-        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
-            if let data = data,
-               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               json["message"] as? String != nil {
-                DispatchQueue.main.async {
-                    print("✅ Ride saved successfully")
-                    self?.loadRideHistory() // Refresh ride history
-                }
-            } else {
-                print("❌ Failed to save ride: \(error?.localizedDescription ?? "Unknown error")")
-                }
-        }.resume()
+        let endLoc = routePoints.last.map { "\($0.coordinate.latitude),\($0.coordinate.longitude)" }
+        _ = networkManager.endRide(rideId: rideId, endLocation: endLoc, totalDistance: distanceInMiles, maxSpeed: currentRideMaxSpeed, avgSpeed: currentRideAverageSpeed, durationMinutes: durationInMinutes)
+            .sink(receiveCompletion: { _ in }, receiveValue: { [weak self] _ in
+                print("✅ Ride saved successfully")
+                self?.loadRideHistory()
+            })
     }
     
     private func startRideTimer() {
@@ -306,28 +270,10 @@ class LocationManager: NSObject, ObservableObject {
         }
     }
     
-    func pauseRide() {
-        guard rideStartTime != nil, !isRidePaused else { return }
-        
-        isRidePaused = true
-        ridePauseTime = Date()
-        
-        print("⏸️ Ride paused")
-    }
-    
-    func resumeRide() {
-        guard rideStartTime != nil, isRidePaused, let pauseTime = ridePauseTime else { return }
-        
-        // Add paused duration to total
-        let pausedDuration = Date().timeIntervalSince(pauseTime)
-        activePausedDuration += pausedDuration
-        pausedDurations.append(pausedDuration)
-        
-        isRidePaused = false
-        ridePauseTime = nil
-        
-        print("▶️ Ride resumed (paused for \(Int(pausedDuration)) seconds)")
-    }
+    // Deprecated: use pauseRideTracking()/resumeRideTracking() wrappers below
+    // Keeping stubs to avoid breaking callers; forward to tracking methods
+    func pauseRide() { pauseRideTracking() }
+    func resumeRide() { resumeRideTracking() }
     
     private func resetRideData() {
         rideStartTime = nil
@@ -736,6 +682,10 @@ class LocationManager: NSObject, ObservableObject {
             calculateRoute(to: destination, routeType: .fastest)
         }
     }
+    
+    // Voice assistant friendly wrappers
+    func startRide() { startRideTracking() }
+    func stopRide() { stopRideTracking() }
 }
 
 // MARK: - CLLocationManagerDelegate

@@ -67,6 +67,7 @@ struct MaintenanceView: View {
     
     private var maintenanceList: some View {
         List {
+            upcomingRemindersSection
             ForEach(groupedRecords.keys.sorted(by: >), id: \.self) { year in
                 Section(header: Text("\(year)")) {
                     ForEach(groupedRecords[year] ?? []) { record in
@@ -86,6 +87,50 @@ struct MaintenanceView: View {
         }
         .refreshable {
             bikeManager.fetchMaintenanceRecords(for: bike.id)
+        }
+    }
+
+    private var upcomingRemindersSection: some View {
+        Section(header: Text("Upcoming Reminders")) {
+            let upcoming = bikeManager.maintenanceRecords.filter { rec in
+                // Reminder is enabled and either nextServiceMileage or nextServiceDate approaches
+                guard rec.reminderEnabled else { return false }
+                let mileageDueSoon: Bool = {
+                    if let next = rec.nextServiceMileage, next > 0 {
+                        return (bike.currentMileage + 250) >= next // within 250 miles
+                    }
+                    return false
+                }()
+                let dateDueSoon: Bool = {
+                    if let nextDateStr = rec.nextServiceDate {
+                        let fmt = DateFormatter(); fmt.dateFormat = "yyyy-MM-dd"
+                        if let nextDate = fmt.date(from: nextDateStr) {
+                            return nextDate.timeIntervalSinceNow <= 14 * 24 * 3600 // within 14 days
+                        }
+                    }
+                    return false
+                }()
+                return mileageDueSoon || dateDueSoon
+            }
+            if upcoming.isEmpty {
+                Text("No upcoming maintenance due soon")
+                    .foregroundColor(.secondary)
+            } else {
+                ForEach(upcoming) { rec in
+                    HStack {
+                        Image(systemName: rec.maintenanceType.icon).foregroundColor(.orange)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(rec.title).font(.subheadline).fontWeight(.semibold)
+                            HStack(spacing: 8) {
+                                if let nextMiles = rec.nextServiceMileage { Text("Due @ \(nextMiles) mi").font(.caption).foregroundColor(.secondary) }
+                                if let nextDate = rec.nextServiceDate { Text("By \(nextDate)").font(.caption).foregroundColor(.secondary) }
+                            }
+                        }
+                        Spacer()
+                        Text("Due Soon").font(.caption).padding(6).background(Color.orange.opacity(0.15)).cornerRadius(6)
+                    }
+                }
+            }
         }
     }
     

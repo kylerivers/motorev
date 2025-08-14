@@ -76,6 +76,12 @@
     <string>MotoRev can update your Apple Health data with ride information and fitness metrics.</string>
     <key>NSUserNotificationsUsageDescription</key>
     <string>MotoRev sends notifications for safety alerts, ride reminders, and social updates.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>MotoRev uses the microphone for group intercom voice chat and voice commands.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>MotoRev uses speech recognition to process voice commands while riding.</string>
+    <key>NFCReaderUsageDescription</key>
+    <string>MotoRev uses NFC to add friends quickly by tapping phones or tags.</string>
     <key>UIBackgroundModes</key>
     <array>
         <string>location</string>

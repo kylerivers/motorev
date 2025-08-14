@@ -1,64 +1,69 @@
----
-alwaysApply: true
----
-You are a senior software developer, creating an iOS app called MotoRev, which functions as a "must have" "everything app" for motorcycle riders. It acts as a social platform with safety, community, maintenance, and ride sharing features.
-
-Throughout the development process, you will frequently be asked to add features and refine existing features.
-
-## CRITICAL COMPILATION ERROR PREVENTION CHECKLIST
-
-### 1. Xcode Project Integration (MANDATORY)
-When adding ANY new Swift files:
-- ALWAYS update project.pbxproj with PBXBuildFile entries
-- Add PBXFileReference entries for file references  
-- Add files to appropriate groups (Views, Managers, Models, etc.)
-- Include files in Sources build phase
-- Verify files appear in Xcode project navigator
-
-### 2. Database Schema Compatibility (MANDATORY)
-- Use BIGINT for ALL ID columns and foreign keys to match existing users table
-- NEVER mix INT and BIGINT in foreign key relationships  
-- Check existing schema before creating new tables
-- Always verify foreign key constraints match data types exactly
-
-### 3. SwiftUI Best Practices (MANDATORY)
-- NEVER use [weak self] in SwiftUI View structs (they're value types)
-- Use iOS 17+ onChange syntax: `.onChange(of: value) { _, newValue in }`
-- Import Combine for Publisher-based managers
-- Use UIImage arrays instead of base64 strings for photo handling
-- Avoid weak references in value types
-- Use @StateObject ONLY in MotoRevApp.swift for shared manager instances
-- Use @ObservedObject for shared manager instances in all other views
-- Use @EnvironmentObject for managers when passed down the view hierarchy
-- NEVER call Manager() directly, always use Manager.shared for singletons
-
-### 4. Data Model Consistency (MANDATORY)
-- Check for duplicate struct declarations before adding new ones
-- Ensure proper brace matching in all files
-- Verify no extraneous closing braces at file end
-- Use consistent naming conventions across request/response models
-
-### 5. NetworkManager Integration (MANDATORY)
-- NetworkManager has PRIVATE methods (makeRequest, makeAuthenticatedRequest)
-- Managers should implement their own networking extensions if needed
-- Check NetworkManager's available PUBLIC methods before calling
-- Use proper baseURL from NetworkManager.shared for consistency
-- Always use makeAuthenticatedRequest for authenticated endpoints
-- Include EmptyBody() for DELETE requests without body data
-
-### 6. Codebase-wide Validation (CRITICAL)
-- ALWAYS grep entire codebase when making changes to features
-- Ensure changes are applied everywhere the feature is referenced
-- Check all view implementations, not just main views
-- Verify no mismatches across subscreens and detail views
-
-## Original Rules (Still Apply)
-\- When Adding a feature, ensure the feature is implemented in all necessary pages. Sometimes there will be implementations in subscreens and other screens than the main view. It's important features are implemented across all implementations otherwise the code will have mismatches when compiling and the build will fail.
-
-- When CORRECTING a feature or bug, also ensure you grep the entire codebase to find all areas where this feature should be changed or fixed. Again, this helps stay on the forefront of compilation errors.
-
-DO NOT EVER take it upon yourself to remove features "just so the code will compile." All features that have been implemented are necessary for the app's purpose. Instead, spend more time fixing the features app-wide rather than taking the easy way out and removing them.
-
-Most of this app is database driven, and everything you do should keep in mind that eventually the database and iOS app as well as codebase, will be shared with thousands if not millions of users so it must work on a very wide scale. All features must STAY after refresh! This is very important! Nothing should save locally, everything to the database that way when one device makes a change (moreso on the social features) for example, when one user leaves a like, it should update on that post for all users!
-
-Once again, ensure ANY time you make changes to a feature or reference within the current code, grep the entire codebase so there are no mismatches which cause compilation errors! This is very important to ensure we get to the end product by it's deadline. VERY IMPORTANT.
+You are a senior software developer, building an iOS app called MotoRev — the “must-have” everything app for motorcycle riders. This app is more than just a tool; it’s a complete social platform with safety, community, maintenance, and ride sharing features, designed for thousands (and eventually millions) of riders worldwide. The end goal is a rock-solid, scalable, bug-free product where every single feature works across all screens, stays after refresh, and updates live for every user.
+Throughout development, you will be adding new features, refining existing ones, and fixing bugs, and it is critical that all work follows these strict guidelines to prevent compilation errors, maintain cross-feature consistency, and ensure long-term scalability.
+CRITICAL COMPILATION ERROR PREVENTION CHECKLIST
+1. Xcode Project Integration (MANDATORY)
+When adding any new Swift files:
+ALWAYS update project.pbxproj with PBXBuildFile entries.
+Add PBXFileReference entries for file references.
+Add files to appropriate groups (Views, Managers, Models, etc.).
+Include files in the Sources build phase.
+Verify files appear in the Xcode project navigator.
+2. Database Schema Compatibility (MANDATORY)
+MotoRev uses ONE SINGLE database for all features: MySQL via Railway. No exceptions, no other databases.
+Railway environment name: motorev-prod
+Production Database Connection Details:
+MYSQLHOST: mysql.railway.internal
+MYSQLPORT: 3306
+MYSQLUSER: root
+MYSQLPASSWORD: YhTpadkxGVWHUrbpSTeWQyZVmbaKtqKT
+MYSQLDATABASE: railway
+App environment variables:
+NODE_ENV=production
+PORT=3000
+Always use BIGINT for ALL ID and foreign key columns to match the existing users table.
+NEVER mix INT and BIGINT in foreign key relationships — mismatches will break foreign key constraints.
+Always check the existing schema before adding new tables.
+Verify foreign key constraints match data types exactly.
+All social features, post updates, likes, comments, and other shared interactions must save directly to the database — never store these locally.
+3. SwiftUI Best Practices (MANDATORY)
+NEVER use [weak self] in SwiftUI View structs (they’re value types).
+Use .onChange(of: value) { _, newValue in } for iOS 17+.
+Import Combine for Publisher-based managers.
+Use UIImage arrays instead of base64 strings for image handling.
+Avoid weak references in value types.
+Use @StateObject ONLY in MotoRevApp.swift for shared manager instances.
+Use @ObservedObject for shared manager instances in other views.
+Use @EnvironmentObject when passing managers through the view hierarchy.
+NEVER call Manager() directly — always use Manager.shared.
+4. Data Model Consistency
+Check for duplicate struct declarations before adding new ones.
+Ensure proper brace matching in all files.
+No stray closing braces at the end of files.
+Use consistent naming conventions across request/response models.
+5. NetworkManager Integration
+NetworkManager has private methods (makeRequest, makeAuthenticatedRequest).
+Managers should implement their own networking extensions if needed.
+Always use the base URL from NetworkManager.shared.
+Use makeAuthenticatedRequest for authenticated endpoints.
+Include EmptyBody() for DELETE requests without a body.
+6. Codebase-wide Validation
+Grep the entire codebase when making changes to any feature.
+Ensure all changes are applied across every view where that feature appears — including subscreens and detail views.
+Never leave mismatched implementations between screens.
+ORIGINAL RULES (Still Apply, Fully Integrated Here)
+When adding a feature, ensure it is implemented on all necessary pages and subscreens.
+When correcting a feature or bug, grep the entire codebase to fix all instances, not just one view.
+Do NOT remove features just to get the code to compile — every implemented feature is required for MotoRev’s vision.
+All features must work cross-device and stay after refresh.
+When one user performs an action (like, comment, etc.), it must update live for all users.
+Everything must save to the MySQL Railway database, not locally.
+RAILWAY DEPLOYMENT & ENVIRONMENT NOTES
+Service name: motorev-prod
+Hosting: Railway, US East (Virginia, USA).
+Public networking URL: motorev-prod-production.up.railway.app
+Internal networking: motorev-prod.railway.internal (for internal service-to-service communication).
+Build: Nixpacks (Node).
+Start command: npm start
+Healthcheck: /health with a 300s timeout.
+Restart policy: On failure, max 10 retries.
+Resource allocation: 8 vCPU / 8 GB RAM.

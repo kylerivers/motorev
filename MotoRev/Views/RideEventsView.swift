@@ -1,5 +1,6 @@
 import SwiftUI
 import MapKit
+import Combine
 
 struct RideEventsView: View {
     @EnvironmentObject var networkManager: NetworkManager
@@ -17,6 +18,8 @@ struct RideEventsView: View {
     @State private var selectedFilter: EventFilter = .all
     @State private var selectedTab: EventsTab = .events
     @State private var selectedRouteTab: RouteTab = .search
+    @State private var cancellables = Set<AnyCancellable>()
+    @State private var isShowingSampleData = false
     
     enum EventsTab: String, CaseIterable {
         case events = "Events"
@@ -40,6 +43,21 @@ struct RideEventsView: View {
                 }
                 .pickerStyle(SegmentedPickerStyle())
                 .padding()
+                
+                // Sample data banner
+                if isShowingSampleData && selectedTab == .events {
+                    HStack {
+                        Image(systemName: "info.circle.fill")
+                            .foregroundColor(.orange)
+                        Text("Events API temporarily unavailable. Showing sample data.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
+                    .background(Color.orange.opacity(0.1))
+                }
                 
                 // Tab content
                 TabView(selection: $selectedTab) {
@@ -255,10 +273,31 @@ struct RideEventsView: View {
         errorMessage = nil
         
         // Use NetworkManager to fetch events from backend
-        makeAuthenticatedRequest(endpoint: "/api/rides/events", method: "GET") { (result: Result<EventsResponse, Error>) in
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let response):
+        networkManager.getEvents()
+            .sink(receiveCompletion: { completion in
+                DispatchQueue.main.async {
+                    switch completion {
+                    case .finished:
+                        break
+                    case .failure(let error):
+                        let message = error.localizedDescription
+                        if message.contains("HTTP 404") || message.contains("Route not found") {
+                            // Show sample events data when API is unavailable
+                            self.events = self.createSampleEvents()
+                            self.isShowingSampleData = true
+                            self.errorMessage = nil
+                            print("🔶 Events API unavailable, showing sample data")
+                        } else if message.contains("No authentication token") {
+                            self.errorMessage = "Please sign in to view events."
+                        } else {
+                            self.errorMessage = "Failed to load events: \(message)"
+                        }
+                        print("🔴 Events loading error: \(error)")
+                        self.isLoading = false
+                    }
+                }
+            }, receiveValue: { response in
+                DispatchQueue.main.async {
                     let dateFormatter = ISO8601DateFormatter()
                     dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
                     
@@ -278,34 +317,87 @@ struct RideEventsView: View {
                             isParticipating: eventData.is_participating == 1
                         )
                     }
-                    self.isLoading = false
-                    
-                case .failure(let error):
-                    self.errorMessage = "Failed to load events: \(error.localizedDescription)"
+                    self.isShowingSampleData = false
                     self.isLoading = false
                 }
-            }
-        }
+            })
+            .store(in: &cancellables)
+    }
+    
+    private func createSampleEvents() -> [RideEvent] {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        return [
+            RideEvent(
+                id: "sample-1",
+                title: "Weekend Mountain Ride",
+                description: "Join us for a scenic ride through the mountains. Perfect for intermediate riders!",
+                startTime: calendar.date(byAdding: .day, value: 1, to: now) ?? now,
+                endTime: calendar.date(byAdding: .day, value: 1, to: now)?.addingTimeInterval(3600 * 4) ?? now,
+                location: "Blue Ridge Parkway, NC",
+                organizerUsername: "RiderPro",
+                participantCount: 8,
+                maxParticipants: 15,
+                isPublic: true,
+                isOrganizer: false,
+                isParticipating: false
+            ),
+            RideEvent(
+                id: "sample-2",
+                title: "City Evening Cruise",
+                description: "Relaxed evening ride through downtown. Great for beginners and social riders.",
+                startTime: calendar.date(byAdding: .day, value: 3, to: now) ?? now,
+                endTime: calendar.date(byAdding: .day, value: 3, to: now)?.addingTimeInterval(3600 * 2) ?? now,
+                location: "Downtown Metro Area",
+                organizerUsername: "CityRider",
+                participantCount: 12,
+                maxParticipants: 20,
+                isPublic: true,
+                isOrganizer: false,
+                isParticipating: true
+            ),
+            RideEvent(
+                id: "sample-3",
+                title: "Track Day Experience",
+                description: "Professional track day for experienced riders. Safety gear required.",
+                startTime: calendar.date(byAdding: .day, value: 7, to: now) ?? now,
+                endTime: calendar.date(byAdding: .day, value: 7, to: now)?.addingTimeInterval(3600 * 8) ?? now,
+                location: "Motorsports Complex",
+                organizerUsername: "TrackMaster",
+                participantCount: 5,
+                maxParticipants: 10,
+                isPublic: true,
+                isOrganizer: false,
+                isParticipating: false
+            )
+        ]
     }
     
     private func loadCompletedRides() {
         isLoadingRides = true
         print("🔄 Loading completed rides from API...")
         
-        makeAuthenticatedRequest(endpoint: "/api/rides/completed", method: "GET") { (result: Result<CompletedRidesResponse, Error>) in
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let response):
+        networkManager.getCompletedRides()
+            .sink(receiveCompletion: { completion in
+                DispatchQueue.main.async {
+                    switch completion {
+                    case .finished:
+                        break
+                    case .failure(let error):
+                        print("❌ Failed to load completed rides: \(error)")
+                        print("❌ Error details: \(error.localizedDescription)")
+                        self.isLoadingRides = false
+                    }
+                }
+            }, receiveValue: { response in
+                DispatchQueue.main.async {
                     print("✅ Successfully loaded \(response.rides.count) completed rides")
                     self.completedRides = response.rides
                     self.isLoadingRides = false
-                case .failure(let error):
-                    print("❌ Failed to load completed rides: \(error)")
-                    print("❌ Error details: \(error.localizedDescription)")
-                    self.isLoadingRides = false
                 }
-            }
-        }
+            })
+            .store(in: &cancellables)
     }
 }
 
@@ -1040,77 +1132,7 @@ struct RideEvent: Identifiable {
     let isParticipating: Bool
 }
 
-// MARK: - RideEventsView Network Extension
-extension RideEventsView {
-    private func makeAuthenticatedRequest<T: Codable, U: Codable>(
-        endpoint: String,
-        method: String,
-        body: T? = nil,
-        completion: @escaping (Result<U, Error>) -> Void
-    ) where U: Sendable {
-        guard let token = networkManager.authToken else {
-            completion(.failure(NSError(domain: "RideEventsView", code: 401, userInfo: [NSLocalizedDescriptionKey: "No authentication token"])))
-            return
-        }
 
-        // Build URL from NetworkManager baseURL, avoiding duplicate "/api"
-        let base = networkManager.baseURL // e.g. https://.../api
-        let trimmedEndpoint = endpoint.hasPrefix("/api/") ? String(endpoint.dropFirst(5)) : endpoint.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        let urlString = base.hasSuffix("/") ? base + trimmedEndpoint : base + "/" + trimmedEndpoint
-        guard let url = URL(string: urlString) else {
-            completion(.failure(NSError(domain: "RideEventsView", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid URL: \(urlString)"])))
-            return
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = method
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-
-        // Only attach body for non-GET methods
-        if method.uppercased() != "GET", let body = body {
-            do {
-                let encoder = JSONEncoder()
-                request.httpBody = try encoder.encode(body)
-            } catch {
-                completion(.failure(error))
-                return
-            }
-        }
-
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            if let error = error {
-                completion(.failure(error))
-                return
-            }
-
-            guard let http = response as? HTTPURLResponse else {
-                completion(.failure(NSError(domain: "RideEventsView", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])))
-                return
-            }
-            guard (200..<300).contains(http.statusCode), let data = data else {
-                completion(.failure(NSError(domain: "RideEventsView", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: "HTTP \(http.statusCode)"])))
-                return
-            }
-
-            do {
-                let decoder = JSONDecoder()
-                let result = try decoder.decode(U.self, from: data)
-                completion(.success(result))
-            } catch {
-                completion(.failure(error))
-            }
-        }.resume()
-    }
-
-    private func makeAuthenticatedRequest<U: Codable>(
-        endpoint: String,
-        method: String,
-        completion: @escaping (Result<U, Error>) -> Void
-    ) where U: Sendable {
-        makeAuthenticatedRequest(endpoint: endpoint, method: method, body: Optional<EmptyBody>.none, completion: completion)
-    }
-}
 
 // MARK: - Rides Data Models and Views
 

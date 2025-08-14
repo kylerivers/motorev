@@ -10,6 +10,8 @@ class SocialManager: ObservableObject {
     var cancellables = Set<AnyCancellable>()
     
     @Published var currentUser: User?
+    @Published var currentUserRole: String = "user"
+    @Published var currentSubscriptionTier: String = "standard"
     @Published var feedPosts: [Post] = []
     @Published var followers: [User] = []
     @Published var following: [User] = []
@@ -32,12 +34,8 @@ class SocialManager: ObservableObject {
         setupSampleDataIfNeeded()
         addSampleNotifications()
         
-        // Debug authentication status
-        print("🔍 SocialManager Init - Debug Info:")
-        print("  - NetworkManager.isLoggedIn: \(networkManager.isLoggedIn)")
-        print("  - NetworkManager.authToken exists: \(networkManager.authToken != nil)")
-        print("  - NetworkManager.currentUser: \(networkManager.currentUser?.username ?? "nil")")
-        print("  - SocialManager.currentUser: \(currentUser?.username ?? "nil")")
+        // Debug auth status (reduced noise in production)
+        print("🔍 SocialManager initialized. Logged in: \(networkManager.isLoggedIn)")
         
         // Observe NetworkManager authentication state changes
         networkManager.$isLoggedIn
@@ -156,7 +154,9 @@ class SocialManager: ObservableObject {
         updatedStats.longestRide = user.stats.longestRide
         
         // Update current user with backend data while preserving app-specific fields
-        currentUser = User(
+        self.currentUserRole = backendUser.role ?? self.currentUserRole
+        self.currentSubscriptionTier = backendUser.subscriptionTier ?? self.currentSubscriptionTier
+        self.currentUser = User(
             id: user.id,
             username: backendUser.username,
             email: backendUser.email,
@@ -176,7 +176,7 @@ class SocialManager: ObservableObject {
             followingCount: backendUser.followingCount ?? 0,
             status: User.UserStatus(rawValue: backendUser.status ?? "offline") ?? .offline,
             locationSharingEnabled: backendUser.locationSharingEnabled ?? false,
-            isVerified: user.isVerified,
+            isVerified: backendUser.isVerified ?? user.isVerified,
             followers: user.followers,
             following: user.following,
             badges: user.badges,
@@ -282,11 +282,7 @@ class SocialManager: ObservableObject {
         
         currentUser = mockUser
         
-        // Set up test authentication for the mock user
-        let testToken = "test-token-for-development"
-        UserDefaults.standard.set(testToken, forKey: "auth_token")
-        
-        // Save mock user data to UserDefaults
+        // Save mock user data to UserDefaults (for previews only)
         do {
             let encoder = JSONEncoder()
             encoder.dateEncodingStrategy = .iso8601
@@ -295,15 +291,7 @@ class SocialManager: ObservableObject {
         } catch {
             print("❌ Failed to save mock user data: \(error)")
         }
-        
-        // Update NetworkManager state asynchronously to avoid view update conflicts
-        Task { @MainActor in
-            self.networkManager.authToken = testToken
-            self.networkManager.currentUser = mockUser  
-            self.networkManager.isLoggedIn = true
-        }
-        
-        print("✅ Created mock user for testing: \(mockUser.username) with auth token")
+        // Do not override NetworkManager auth in production.
     }
     
     private func loadUserData() {
@@ -497,6 +485,10 @@ class SocialManager: ObservableObject {
                                 print("❌ Server error: \(message)")
                             case .invalidResponse:
                                 print("❌ Invalid response from server")
+                            case .invalidURL:
+                                print("❌ Invalid URL error")
+                            case .noData:
+                                print("❌ No data received from server")
                             }
                         }
                         
@@ -1698,6 +1690,30 @@ class SocialManager: ObservableObject {
     
     func getUserProfile(username: String) -> AnyPublisher<BackendUser, Error> {
         networkManager.getUserByUsername(username)
+            .map { response in response.user }
+            .eraseToAnyPublisher()
+    }
+    
+    // MARK: - Friends Management
+    func addFriend(byUsername username: String) {
+        NetworkManager.shared.getUserByUsername(username)
+            .flatMap { response -> AnyPublisher<MessageResponse, Error> in
+                let userId = String(response.user.id)
+                return NetworkManager.shared.followUser(userId: userId)
+            }
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { completion in
+                if case .failure(let error) = completion {
+                    print("❌ Add friend error: \(error)")
+                }
+            }, receiveValue: { resp in
+                print("✅ Friend add response: \(resp.message)")
+            })
+            .store(in: &cancellables)
+    }
+    
+    func getFriend(byUsername username: String) -> AnyPublisher<BackendUser, Error> {
+        NetworkManager.shared.getUserByUsername(username)
             .map { response in response.user }
             .eraseToAnyPublisher()
     }

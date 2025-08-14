@@ -8,19 +8,26 @@ struct RideHubView: View {
     @EnvironmentObject var locationSharingManager: LocationSharingManager
     @EnvironmentObject var crashDetectionManager: CrashDetectionManager
     @EnvironmentObject var weatherManager: WeatherManager
+    @EnvironmentObject var voiceAssistant: VoiceAssistantManager
     @Binding var selectedTab: Int
     @State private var showingCreatePost = false
     @State private var showingRideControls = false
     @State private var showingGroupRideCreation = false
+    @State private var showingGroupRideBrowse = false
     @State private var showingDestinationSearch = false
+    @State private var currentRideType: RideType = .none
     @State private var newPostContent = ""
     @State private var selectedPostUsername: String?
     @State private var showingPostUserProfile = false
     @Environment(\.colorScheme) var colorScheme
     
     // Computed properties for ride data
+    private var isActiveRide: Bool {
+        return locationManager.rideStartTime != nil
+    }
+    
     private var rideTimeDisplay: String {
-        if let startTime = locationManager.rideStartTime {
+        if locationManager.rideStartTime != nil {
             let currentDuration = locationManager.currentRideDuration
             let hours = Int(currentDuration) / 3600
             let minutes = Int(currentDuration.truncatingRemainder(dividingBy: 3600)) / 60
@@ -56,6 +63,81 @@ struct RideHubView: View {
                     // Essential quick actions (streamlined)
                     quickActionsSection
                     
+                    // AI Ride Assistant (Premium)
+                    NavigationLink(destination: AIRideAssistantView()) {
+                        HStack {
+                            Image(systemName: "brain.head.profile").foregroundColor(.purple)
+                            Text("AI Ride Assistant")
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.secondary)
+                        }
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(12)
+                    }
+                    // Music & Voice Chat placeholders
+                    HStack(spacing: 8) {
+                        NavigationLink(destination: SharedMusicView()
+                            .environmentObject(NowPlayingManager.shared)
+                            .environmentObject(GroupRideManager.shared)
+                        ) {
+                            VStack(spacing: 4) {
+                                Image(systemName: "music.note.list")
+                                    .font(.title2)
+                                    .foregroundColor(.blue)
+                                Text("Music")
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.primary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(Color.blue.opacity(0.1))
+                            .cornerRadius(12)
+                        }
+                        
+                        NavigationLink(destination: GroupVoiceChatView()
+                            .environmentObject(WebRTCManager.shared)
+                            .environmentObject(GroupRideManager.shared)
+                            .environmentObject(NetworkManager.shared)
+                        ) {
+                            VStack(spacing: 4) {
+                                Image(systemName: "waveform")
+                                    .font(.title2)
+                                    .foregroundColor(.green)
+                                Text("Voice")
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.primary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(Color.green.opacity(0.1))
+                            .cornerRadius(12)
+                        }
+                        
+                        NavigationLink(destination: RideEventsView()
+                            .environmentObject(NetworkManager.shared)
+                            .environmentObject(SocialManager.shared)
+                            .environmentObject(LocationManager.shared)
+                        ) {
+                            VStack(spacing: 4) {
+                                Image(systemName: "calendar.badge.plus")
+                                    .font(.title2)
+                                    .foregroundColor(.purple)
+                                Text("Events")
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.primary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(Color.purple.opacity(0.1))
+                            .cornerRadius(12)
+                        }
+                    }
+                    
                     // Social feed integration
                     socialFeedSection
                     
@@ -89,6 +171,19 @@ struct RideHubView: View {
             }
             .refreshable {
                 await refreshData()
+            }
+            .sheet(isPresented: $showingGroupRideBrowse) { GroupRideBrowseView() }
+            .onReceive(voiceAssistant.commandPublisher) { cmd in
+                switch cmd {
+                case .startRide: locationManager.startRide()
+                case .pauseTracking: locationManager.pauseRide()
+                case .resumeTracking: locationManager.resumeRide()
+                case .stopRide: locationManager.stopRide()
+                case .checkWeather:
+                    if let loc = locationManager.location?.coordinate {
+                        WeatherManager.shared.fetchWeatherData(for: loc)
+                    }
+                }
             }
         }
         .sheet(isPresented: $showingCreatePost) {
@@ -248,25 +343,15 @@ struct RideHubView: View {
                 .cornerRadius(12)
             }
             
-            HStack(spacing: 12) {
-                Button(action: { startSoloRide() }) {
-                    Label("Solo Ride", systemImage: "person.fill")
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
-                }
-                
-                Button(action: { showingGroupRideCreation = true }) {
-                    Label("Group Ride", systemImage: "person.3.fill")
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.green)
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
-                }
-            }
+            // Enhanced Ride Type Selection
+            RideHubControlView(
+                isRideActive: isActiveRide,
+                currentRideType: getCurrentRideType(),
+                onSoloRide: { startSoloRide() },
+                onGroupRide: { showingGroupRideCreation = true },
+                onJoinRide: { showingGroupRideBrowse = true },
+                onEndRide: { locationManager.stopRideTracking() }
+            )
         }
         .padding()
         .background(Color(.systemBackground))
@@ -281,9 +366,9 @@ struct RideHubView: View {
                 .font(.headline)
                 .fontWeight(.semibold)
             
-            HStack(spacing: 12) {
+            HStack(spacing: 8) {
                 HubQuickActionButton(
-                    title: "Navigate",
+                    title: "Map",
                     icon: "map.fill",
                     color: .blue
                 ) {
@@ -292,7 +377,7 @@ struct RideHubView: View {
                 
                 HubQuickActionButton(
                     title: "Garage",
-                    icon: "car.circle.fill",
+                    icon: "wrench.and.screwdriver.fill",
                     color: .purple
                 ) {
                     selectedTab = 2 // Garage tab
@@ -399,41 +484,92 @@ struct RideHubView: View {
     // MARK: - Helper Views
     private var statusIndicator: some View {
         HStack(spacing: 6) {
-            Circle()
-                .fill(crashDetectionManager.isMonitoring ? Color.green : Color.orange)
-                .frame(width: 8, height: 8)
+            Image(systemName: crashDetectionManager.isMonitoring ? "shield.checkered" : "shield")
+                .font(.caption)
+                .foregroundColor(crashDetectionManager.isMonitoring ? .green : .orange)
             
             Text(crashDetectionManager.isMonitoring ? "Protected" : "Safety Off")
                 .font(.caption)
                 .fontWeight(.medium)
+                .lineLimit(1)
         }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(crashDetectionManager.isMonitoring ? Color.green.opacity(0.1) : Color.orange.opacity(0.1))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(crashDetectionManager.isMonitoring ? Color.green.opacity(0.3) : Color.orange.opacity(0.3), lineWidth: 1)
+        )
     }
     
     private var weatherWidget: some View {
         VStack(spacing: 4) {
-            Text("72°")
-                .font(.title2)
-                .fontWeight(.semibold)
-            
-            Image(systemName: "sun.max.fill")
-                .font(.caption)
-                .foregroundColor(.orange)
+            if let currentWeather = weatherManager.currentWeather {
+                Text("\(Int(currentWeather.temperature))°")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                
+                Image(systemName: currentWeather.iconName)
+                    .font(.caption)
+                    .foregroundColor(weatherIconColor(for: currentWeather.conditions))
+            } else {
+                Text("--°")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                
+                Image(systemName: "location.slash")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+        }
+        .onAppear {
+            // Refresh weather when view appears
+            if let location = locationManager.location {
+                weatherManager.fetchWeatherData(for: location.coordinate)
+            }
+        }
+        .onChange(of: locationManager.location) { _, newLocation in
+            // Update weather when location changes
+            if let location = newLocation {
+                weatherManager.fetchWeatherData(for: location.coordinate)
+            }
+        }
+    }
+    
+    private func weatherIconColor(for conditions: String) -> Color {
+        switch conditions.lowercased() {
+        case "clear": return .orange
+        case "partly cloudy", "clouds": return .gray
+        case "rain", "drizzle", "rain showers": return .blue
+        case "snow": return .cyan
+        case "thunderstorm": return .purple
+        case "fog", "mist", "haze": return .gray
+        default: return .gray
         }
     }
     
     private var safetyStatusBar: some View {
         HStack {
-            Label(
-                crashDetectionManager.isMonitoring ? "Safety Active" : "Safety Inactive",
-                systemImage: crashDetectionManager.isMonitoring ? "checkmark.shield.fill" : "exclamationmark.shield.fill"
-            )
-            .font(.caption)
-            .foregroundColor(crashDetectionManager.isMonitoring ? .green : .orange)
+            Button(action: {
+                // Navigate to safety settings
+                // Could show ProfileView → Safety Center
+            }) {
+                Label(
+                    crashDetectionManager.isMonitoring ? "Crash Detection On" : "Crash Detection Off",
+                    systemImage: crashDetectionManager.isMonitoring ? "checkmark.shield.fill" : "exclamationmark.shield.fill"
+                )
+                .font(.caption)
+                .foregroundColor(crashDetectionManager.isMonitoring ? .green : .orange)
+            }
             
             Spacer()
             
             if !safetyManager.emergencyContacts.isEmpty {
-                Label("\(safetyManager.emergencyContacts.count) contacts", systemImage: "person.crop.circle.fill")
+                let contactCount = safetyManager.emergencyContacts.count
+                Label(contactCount == 1 ? "1 Emergency Contact" : "\(contactCount) Emergency Contacts", systemImage: "person.crop.circle.fill")
                     .font(.caption)
                     .foregroundColor(.blue)
             }
@@ -467,13 +603,31 @@ struct RideHubView: View {
         showingDestinationSearch = true
     }
     
+    private func getCurrentRideType() -> RideType {
+        return currentRideType
+    }
+    
     private func startSoloRide() {
+        currentRideType = .solo
         // Start ride tracking
         locationManager.startRideTracking()
         safetyManager.startRide()
         
         // Navigate to map tab to show ride in progress
         selectedTab = 1
+        
+        // Create social post about the ride
+        socialManager.createPost(
+            content: "🏍️ Starting a solo ride! Wish me luck! #SoloRide #MotoRev",
+            location: locationManager.location?.coordinate,
+            rideData: RideData(
+                distance: 0,
+                duration: 0,
+                averageSpeed: 0,
+                maxSpeed: 0,
+                safetyScore: 100
+            )
+        )
     }
     
     private func refreshData() async {
@@ -488,6 +642,75 @@ struct RideHubView: View {
     }
 }
 
+// MARK: - Shared Music UI
+struct SharedMusicView: View {
+    @EnvironmentObject var nowPlaying: NowPlayingManager
+    @EnvironmentObject var groupRideManager: GroupRideManager
+    
+    var body: some View {
+        List {
+            Section(header: Text("Now Playing")) {
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text(nowPlaying.currentTitle ?? "Not Playing").font(.headline)
+                        Text(nowPlaying.currentArtist ?? "").font(.caption).foregroundColor(.secondary)
+                    }
+                    Spacer()
+                    Button(nowPlaying.isPlaying ? "Pause" : "Play") { 
+                        nowPlaying.playPause()
+                    }
+                }
+            }
+            
+            if groupRideManager.isInGroupRide {
+                Section(header: Text("Group Music Session")) {
+                    if nowPlaying.isInGroupSession {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Image(systemName: "person.3.fill")
+                                    .foregroundColor(.green)
+                                Text("Connected to group session")
+                                    .font(.subheadline)
+                                    .foregroundColor(.green)
+                                Spacer()
+                                Button("Leave") {
+                                    nowPlaying.leaveGroupMusicSession()
+                                }
+                                .foregroundColor(.red)
+                            }
+                            
+                            if let session = nowPlaying.groupSession {
+                                Text("Participants: \(session.participants.count)")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    } else {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Share your music with the group")
+                                .font(.subheadline)
+                            Button("Join Group Session") {
+                                if let groupId = groupRideManager.currentGroupRide?.id {
+                                    nowPlaying.joinGroupMusicSession(groupId: groupId)
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+                    }
+                }
+            } else {
+                Section(header: Text("Group Music")) {
+                    Text("Join a group ride to share music with others.")
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+        .navigationTitle("Shared Music")
+    }
+}
+
+// Note: GroupVoiceChatView is now defined in its own file
+
 // MARK: - Supporting Views
 
 struct HubQuickActionButton: View {
@@ -498,21 +721,25 @@ struct HubQuickActionButton: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 8) {
+            VStack(spacing: 4) {
                 Image(systemName: icon)
                     .font(.title2)
                     .foregroundColor(color)
                 
                 Text(title)
                     .font(.caption)
-                    .fontWeight(.medium)
+                    .fontWeight(.semibold)
                     .foregroundColor(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 4)
             .background(Color(.systemGray6))
             .cornerRadius(12)
         }
+        .buttonStyle(PlainButtonStyle())
     }
 }
 
@@ -680,12 +907,51 @@ struct CreatePostSheet: View {
 
 struct GroupRideCreationSheet: View {
     @Environment(\.dismiss) var dismiss
+    @State private var name: String = ""
+    @State private var description: String = ""
+    @State private var isPrivate: Bool = false
+    @State private var maxMembers: Int = 10
+    @State private var isCreating: Bool = false
+    @State private var creationError: String?
+    @State private var createdRideId: String?
+    @State private var inviteUsername: String = ""
+    @State private var inviteMessage: String?
     
     var body: some View {
         NavigationView {
-            VStack {
-                Text("Create Group Ride")
-                Spacer()
+            Form {
+                Section(header: Text("Details")) {
+                    TextField("Ride name (e.g., Sunday Cruise)", text: $name)
+                    TextField("Description (optional)", text: $description)
+                    Toggle("Private (invite only)", isOn: $isPrivate)
+                    Stepper(value: $maxMembers, in: 2...50) {
+                        HStack {
+                            Text("Max Members")
+                            Spacer()
+                            Text("\(maxMembers)")
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+
+                if createdRideId != nil {
+                    Section(header: Text("Invite Friends"), footer: inviteFooterView) {
+                        HStack {
+                            TextField("Friend's username", text: $inviteUsername)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                            Button("Send") { sendInvite() }
+                                .disabled(inviteUsername.trimmingCharacters(in: .whitespaces).isEmpty)
+                        }
+                    }
+                }
+
+                if let creationError {
+                    Section {
+                        Text(creationError)
+                            .foregroundColor(.red)
+                    }
+                }
             }
             .navigationTitle("Group Ride")
             .navigationBarTitleDisplayMode(.inline)
@@ -694,8 +960,49 @@ struct GroupRideCreationSheet: View {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Create") { dismiss() }
+                    Button(createdRideId == nil ? "Create" : "Done") {
+                        if createdRideId == nil { createRide() } else { dismiss() }
+                    }
+                    .disabled(isCreating || name.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
+            }
+            .overlay {
+                if isCreating { ProgressView("Creating...") }
+            }
+        }
+    }
+
+    private var inviteFooterView: some View {
+        Group {
+            if let inviteMessage { Text(inviteMessage).foregroundColor(.secondary) }
+        }
+    }
+
+    private func createRide() {
+        isCreating = true
+        creationError = nil
+        GroupRideManager.shared.createGroupRide(name: name.trimmingCharacters(in: .whitespaces), description: description.trimmingCharacters(in: .whitespaces).isEmpty ? nil : description.trimmingCharacters(in: .whitespaces), isPrivate: isPrivate) { result in
+            isCreating = false
+            switch result {
+            case .success:
+                createdRideId = GroupRideManager.shared.currentGroupRide?.id
+            case .failure(let error):
+                creationError = error.localizedDescription
+            }
+        }
+    }
+
+    private func sendInvite() {
+        let username = inviteUsername.trimmingCharacters(in: .whitespaces)
+        guard !username.isEmpty else { return }
+        inviteMessage = nil
+        GroupRideManager.shared.inviteUser(username) { (result: Result<Void, Error>) in
+            switch result {
+            case .success:
+                inviteMessage = "Invitation sent to @\(username)"
+                inviteUsername = ""
+            case .failure(let error):
+                inviteMessage = "Failed to invite: \(error.localizedDescription)"
             }
         }
     }
@@ -724,6 +1031,7 @@ struct UserProfileSheet: View {
 
 struct DestinationSearchSheet: View {
     @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var locationManager: LocationManager
     @State private var searchText = ""
     @State private var searchResults: [SearchResult] = []
     @State private var recentDestinations: [SearchResult] = []
@@ -915,6 +1223,163 @@ struct DestinationRow: View {
         case "recent": return "clock.fill"
         default: return "mappin.circle.fill"
         }
+    }
+}
+
+// MARK: - Enhanced Ride Hub Control
+
+struct RideHubControlView: View {
+    let isRideActive: Bool
+    let currentRideType: RideType
+    let onSoloRide: () -> Void
+    let onGroupRide: () -> Void
+    let onJoinRide: () -> Void
+    let onEndRide: () -> Void
+    
+    var body: some View {
+        if isRideActive {
+            // Active ride display
+            VStack(spacing: 12) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Active Ride")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                        
+                        HStack {
+                            Image(systemName: currentRideType.icon)
+                                .foregroundColor(currentRideType.color)
+                            Text(currentRideType.description)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    Button("End Ride") {
+                        onEndRide()
+                    }
+                    .buttonStyle(.bordered)
+                    .foregroundColor(.red)
+                }
+                
+                // Quick ride stats would go here
+                HStack(spacing: 24) {
+                    VStack {
+                        Text("--:--")
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                        Text("Time")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    VStack {
+                        Text("0.0 mi")
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                        Text("Distance")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    VStack {
+                        Text("0 mph")
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                        Text("Speed")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .padding(.vertical, 8)
+            }
+            .padding()
+            .background(currentRideType.color.opacity(0.1))
+            .cornerRadius(16)
+        } else {
+            // Start ride options
+            VStack(spacing: 12) {
+                HStack {
+                    Text("Start Your Ride")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                    
+                    Spacer()
+                    
+                    Image(systemName: "figure.motorcycle")
+                        .font(.title2)
+                        .foregroundColor(.blue)
+                }
+                
+                HStack(spacing: 8) {
+                    // Solo Ride
+                    RideTypeButton(
+                        icon: "person.fill",
+                        title: "Solo",
+                        subtitle: "Independent ride",
+                        color: .green,
+                        action: onSoloRide
+                    )
+                    
+                    // Group Ride
+                    RideTypeButton(
+                        icon: "person.3.fill",
+                        title: "Group",
+                        subtitle: "Lead others",
+                        color: .purple,
+                        action: onGroupRide
+                    )
+                    
+                    // Join Ride
+                    RideTypeButton(
+                        icon: "person.2.fill",
+                        title: "Join",
+                        subtitle: "Find groups",
+                        color: .orange,
+                        action: onJoinRide
+                    )
+                }
+            }
+            .padding()
+            .background(Color(.systemGray6))
+            .cornerRadius(16)
+        }
+    }
+}
+
+struct RideTypeButton: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+    let color: Color
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.title2)
+                    .foregroundColor(color)
+                
+                VStack(spacing: 2) {
+                    Text(title)
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.primary)
+                    
+                    Text(subtitle)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(color.opacity(0.1))
+            .cornerRadius(12)
+        }
+        .buttonStyle(PlainButtonStyle())
     }
 }
 

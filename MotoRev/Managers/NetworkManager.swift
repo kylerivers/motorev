@@ -106,6 +106,11 @@ class NetworkManager: ObservableObject {
             .eraseToAnyPublisher()
     }
     
+    func getCurrentUserRaw() -> AnyPublisher<UserResponse, Error> {
+        let url = URL(string: "\(baseURL)/auth/me")!
+        return makeAuthenticatedRequest(url: url, method: "GET", body: EmptyBody())
+    }
+    
     // MARK: - User Methods
     
     func updateProfile(
@@ -454,6 +459,115 @@ class NetworkManager: ObservableObject {
         return makeAuthenticatedRequest(url: url, method: "DELETE", body: EmptyBody())
     }
     
+    // Friends' garage
+    func getBikes(for userId: Int) -> AnyPublisher<[Bike], Error> {
+        let url = URL(string: "\(baseURL)/users/\(userId)/bikes")!
+        return makeAuthenticatedRequest(url: url, method: "GET", body: EmptyBody())
+            .map { (response: BikesResponse) in response.bikes }
+            .eraseToAnyPublisher()
+    }
+    
+    // MARK: - Admin APIs
+    func fetchAdminUsers(search: String, completion: @escaping (Result<[AdminUser], Error>) -> Void) {
+        struct AdminUsersResponse: Codable { let users: [AdminUser] }
+        guard let url = URL(string: "\(baseURL)/admin/users?search=\(search.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")") else { completion(.failure(URLError(.badURL))); return }
+        makeAuthenticatedRequest(url: url, method: "GET", body: EmptyBody())
+            .sink(receiveCompletion: { comp in
+                if case let .failure(err) = comp { completion(.failure(err)) }
+            }, receiveValue: { (resp: AdminUsersResponse) in
+                completion(.success(resp.users))
+            })
+            .store(in: &cancellables)
+    }
+    
+    func fetchAdminStats(completion: @escaping (Result<AdminStats, Error>) -> Void) {
+        guard let url = URL(string: "\(baseURL)/admin/stats") else { completion(.failure(URLError(.badURL))); return }
+        makeAuthenticatedRequest(url: url, method: "GET", body: EmptyBody())
+            .sink(receiveCompletion: { comp in
+                if case let .failure(err) = comp { completion(.failure(err)) }
+            }, receiveValue: { (stats: AdminStats) in
+                completion(.success(stats))
+            })
+            .store(in: &cancellables)
+    }
+    
+    func fetchAdminPosts(limit: Int = 50, offset: Int = 0, completion: @escaping (Result<[AdminPost], Error>) -> Void) {
+        guard let url = URL(string: "\(baseURL)/admin/table/posts?limit=\(limit)&offset=\(offset)") else { completion(.failure(URLError(.badURL))); return }
+        makeAuthenticatedRequest(url: url, method: "GET", body: EmptyBody())
+            .sink(receiveCompletion: { comp in
+                if case let .failure(err) = comp { completion(.failure(err)) }
+            }, receiveValue: { (resp: AdminTableResponse<AdminPost>) in
+                completion(.success(resp.rows))
+            })
+            .store(in: &cancellables)
+    }
+    
+    func fetchAdminRides(limit: Int = 50, offset: Int = 0, completion: @escaping (Result<[AdminRide], Error>) -> Void) {
+        guard let url = URL(string: "\(baseURL)/admin/table/rides?limit=\(limit)&offset=\(offset)") else { completion(.failure(URLError(.badURL))); return }
+        makeAuthenticatedRequest(url: url, method: "GET", body: EmptyBody())
+            .sink(receiveCompletion: { comp in
+                if case let .failure(err) = comp { completion(.failure(err)) }
+            }, receiveValue: { (resp: AdminTableResponse<AdminRide>) in
+                completion(.success(resp.rows))
+            })
+            .store(in: &cancellables)
+    }
+    
+    func updateUserRole(userId: Int, role: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        struct UpdateRoleRequest: Codable { let role: String }
+        guard let url = URL(string: "\(baseURL)/admin/users/\(userId)/role") else { completion(.failure(URLError(.badURL))); return }
+        let body = UpdateRoleRequest(role: role)
+        makeAuthenticatedRequest(url: url, method: "PUT", body: body)
+            .sink(receiveCompletion: { comp in
+                switch comp {
+                case .finished: completion(.success(()))
+                case .failure(let err): completion(.failure(err))
+                }
+            }, receiveValue: { (_: MessageResponse) in })
+            .store(in: &cancellables)
+    }
+    
+    func updateUserSubscription(userId: Int, tier: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        struct UpdateTierRequest: Codable { let tier: String }
+        guard let url = URL(string: "\(baseURL)/admin/users/\(userId)/subscription") else { completion(.failure(URLError(.badURL))); return }
+        let body = UpdateTierRequest(tier: tier)
+        makeAuthenticatedRequest(url: url, method: "PUT", body: body)
+            .sink(receiveCompletion: { comp in
+                switch comp {
+                case .finished: completion(.success(()))
+                case .failure(let err): completion(.failure(err))
+                }
+            }, receiveValue: { (_: MessageResponse) in })
+            .store(in: &cancellables)
+    }
+    
+    func fetchAdminHazards(limit: Int = 50, offset: Int = 0, completion: @escaping (Result<[AdminHazard], Error>) -> Void) {
+        guard let url = URL(string: "\(baseURL)/admin/table/hazard_reports?limit=\(limit)&offset=\(offset)") else { completion(.failure(URLError(.badURL))); return }
+        makeAuthenticatedRequest(url: url, method: "GET", body: EmptyBody())
+            .sink(receiveCompletion: { comp in if case let .failure(err) = comp { completion(.failure(err)) } }, receiveValue: { (resp: AdminTableResponse<AdminHazard>) in completion(.success(resp.rows)) })
+            .store(in: &cancellables)
+    }
+    func fetchAdminEmergencies(limit: Int = 50, offset: Int = 0, completion: @escaping (Result<[AdminEmergency], Error>) -> Void) {
+        guard let url = URL(string: "\(baseURL)/admin/table/emergency_events?limit=\(limit)&offset=\(offset)") else { completion(.failure(URLError(.badURL))); return }
+        makeAuthenticatedRequest(url: url, method: "GET", body: EmptyBody())
+            .sink(receiveCompletion: { comp in if case let .failure(err) = comp { completion(.failure(err)) } }, receiveValue: { (resp: AdminTableResponse<AdminEmergency>) in completion(.success(resp.rows)) })
+            .store(in: &cancellables)
+    }
+    func updateHazardStatus(hazardId: Int, status: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        struct Req: Codable { let status: String }
+        guard let url = URL(string: "\(baseURL)/admin/hazards/\(hazardId)/status") else { completion(.failure(URLError(.badURL))); return }
+        makeAuthenticatedRequest(url: url, method: "PUT", body: Req(status: status))
+            .sink(receiveCompletion: { comp in switch comp { case .finished: completion(.success(())); case .failure(let e): completion(.failure(e)) } }, receiveValue: { (_: MessageResponse) in })
+            .store(in: &cancellables)
+    }
+    func resolveEmergency(emergencyId: Int, resolved: Bool, completion: @escaping (Result<Void, Error>) -> Void) {
+        struct Req: Codable { let resolved: Bool }
+        guard let url = URL(string: "\(baseURL)/admin/emergencies/\(emergencyId)/resolve") else { completion(.failure(URLError(.badURL))); return }
+        makeAuthenticatedRequest(url: url, method: "PUT", body: Req(resolved: resolved))
+            .sink(receiveCompletion: { comp in switch comp { case .finished: completion(.success(())); case .failure(let e): completion(.failure(e)) } }, receiveValue: { (_: MessageResponse) in })
+            .store(in: &cancellables)
+    }
+    
     // MARK: - Private Helper Methods
     
     private func makeRequest<T: Codable, U: Codable>(url: URL, method: String, body: T? = nil) -> AnyPublisher<U, Error> {
@@ -653,6 +767,20 @@ class NetworkManager: ObservableObject {
         encoder.dateEncodingStrategy = .iso8601
         return encoder
     }
+
+    // Push token registration
+    func registerPushToken(_ token: String) -> AnyPublisher<MessageResponse, Error> {
+        let url = URL(string: "\(baseURL)/users/push-token")!
+        struct PushTokenReq: Codable { let token: String }
+        return makeAuthenticatedRequest(url: url, method: "POST", body: PushTokenReq(token: token))
+    }
+
+    // Subscription verification (server)
+    func verifyReceipt(productId: String, transactionId: String?, payload: String?) -> AnyPublisher<MessageResponse, Error> {
+        let url = URL(string: "\(baseURL)/users/verify-receipt")!
+        struct VerifyReq: Codable { let productId: String; let transactionId: String?; let payload: String? }
+        return makeAuthenticatedRequest(url: url, method: "POST", body: VerifyReq(productId: productId, transactionId: transactionId, payload: payload))
+    }
 }
 
 // MARK: - Request Models (unique to NetworkManager)
@@ -734,6 +862,8 @@ enum NetworkError: Error {
     case notAuthenticated
     case invalidResponse
     case serverError(String)
+    case invalidURL
+    case noData
 }
 
 extension NetworkError: LocalizedError {
@@ -745,6 +875,10 @@ extension NetworkError: LocalizedError {
             return "Invalid response from server"
         case .serverError(let message):
             return message
+        case .invalidURL:
+            return "The URL is invalid"
+        case .noData:
+            return "No data received from server"
         }
     }
 } 
@@ -877,5 +1011,122 @@ extension NetworkManager {
             .decode(type: MessageResponse.self, decoder: NetworkManager.createJSONDecoder())
             .receive(on: DispatchQueue.main)
             .eraseToAnyPublisher()
+    }
+}
+
+// MARK: - Admin Models
+struct AdminStats: Codable {
+    let users: Int?
+    let posts: Int?
+    let rides: Int?
+    let emergency_events: Int?
+    let hazard_reports: Int?
+    let followers: Int?
+    let post_likes: Int?
+    let post_comments: Int?
+    let location_updates: Int?
+    let riding_packs: Int?
+    let pack_members: Int?
+    let user_sessions: Int?
+    let story_views: Int?
+    let stories: Int?
+}
+
+struct AdminTableResponse<Row: Codable>: Codable {
+    let rows: [Row]
+    let total: Int?
+    let limit: Int?
+    let offset: Int?
+}
+
+struct AdminPost: Codable, Identifiable {
+    let id: Int
+    let user_id: Int
+    let content: String?
+    let likes_count: Int?
+    let comments_count: Int?
+    let created_at: String?
+}
+
+struct AdminRide: Codable, Identifiable {
+    let id: Int
+    let user_id: Int
+    let title: String?
+    let total_distance: Double?
+    let avg_speed: Double?
+    let max_speed: Double?
+    let status: String?
+    let start_time: String?
+}
+
+struct AdminHazard: Codable, Identifiable { let id: Int; let reporter_id: Int?; let hazard_type: String?; let severity: String?; let latitude: Double?; let longitude: Double?; let location_name: String?; let description: String?; let status: String?; let created_at: String? }
+struct AdminEmergency: Codable, Identifiable { let id: Int; let user_id: Int?; let ride_id: Int?; let event_type: String?; let severity: String?; let latitude: Double?; let longitude: Double?; let location_name: String?; let description: String?; let is_resolved: Int?; let created_at: String?; let resolved_at: String? }
+
+// MARK: - Fuel Logs APIs
+extension NetworkManager {
+    func createFuelLog(_ requestBody: CreateFuelLogRequest) -> AnyPublisher<FuelLogResponse, Error> {
+        let url = URL(string: "\(baseURL)/fuel")!
+        return makeAuthenticatedRequest(url: url, method: "POST", body: requestBody)
+    }
+    
+    func listFuelLogs(bikeId: String? = nil, limit: Int = 50, offset: Int = 0) -> AnyPublisher<FuelLogsResponse, Error> {
+        var components = URLComponents(string: "\(baseURL)/fuel")!
+        var queryItems: [URLQueryItem] = [
+            URLQueryItem(name: "limit", value: String(limit)),
+            URLQueryItem(name: "offset", value: String(offset))
+        ]
+        if let bikeId = bikeId { queryItems.append(URLQueryItem(name: "bikeId", value: bikeId)) }
+        components.queryItems = queryItems
+        return makeAuthenticatedRequest(url: components.url!, method: "GET", body: EmptyBody())
+    }
+    
+    func updateFuelLog(id: String, requestBody: CreateFuelLogRequest) -> AnyPublisher<FuelLogResponse, Error> {
+        let url = URL(string: "\(baseURL)/fuel/\(id)")!
+        return makeAuthenticatedRequest(url: url, method: "PUT", body: requestBody)
+    }
+    
+    func deleteFuelLog(id: String) -> AnyPublisher<MessageResponse, Error> {
+        let url = URL(string: "\(baseURL)/fuel/\(id)")!
+        return makeAuthenticatedRequest(url: url, method: "DELETE", body: EmptyBody())
+    }
+}
+
+// MARK: - Ride Recordings APIs
+extension NetworkManager {
+    func uploadRideRecording(_ requestBody: CreateRideRecordingRequest) -> AnyPublisher<RideRecordingResponse, Error> {
+        let url = URL(string: "\(baseURL)/recordings")!
+        return makeAuthenticatedRequest(url: url, method: "POST", body: requestBody)
+    }
+    
+    func listRideRecordings(rideId: String? = nil, limit: Int = 20, offset: Int = 0) -> AnyPublisher<RideRecordingsResponse, Error> {
+        var components = URLComponents(string: "\(baseURL)/recordings")!
+        var queryItems: [URLQueryItem] = [
+            URLQueryItem(name: "limit", value: String(limit)),
+            URLQueryItem(name: "offset", value: String(offset))
+        ]
+        if let rideId = rideId { queryItems.append(URLQueryItem(name: "rideId", value: rideId)) }
+        components.queryItems = queryItems
+        return makeAuthenticatedRequest(url: components.url!, method: "GET", body: EmptyBody())
+    }
+}
+
+// MARK: - Events APIs  
+extension NetworkManager {
+    func getEvents() -> AnyPublisher<EventsResponse, Error> {
+        let url = URL(string: "\(baseURL)/events")!
+        return makeAuthenticatedRequest(url: url, method: "GET", body: EmptyBody())
+    }
+    
+    func getCompletedRides() -> AnyPublisher<CompletedRidesResponse, Error> {
+        let url = URL(string: "\(baseURL)/rides/completed")!
+        return makeAuthenticatedRequest(url: url, method: "GET", body: EmptyBody())
+    }
+}
+
+// MARK: - Safety APIs
+extension NetworkManager {
+    func reportEmergency(_ requestBody: EmergencyReportRequest) -> AnyPublisher<EmergencyReportResponse, Error> {
+        let url = URL(string: "\(baseURL)/safety/emergency")!
+        return makeAuthenticatedRequest(url: url, method: "POST", body: requestBody)
     }
 }

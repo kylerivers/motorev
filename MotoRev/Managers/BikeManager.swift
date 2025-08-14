@@ -353,19 +353,35 @@ class BikeManager: ObservableObject {
             .store(in: &cancellables)
     }
     
-    func addModification(to bikeId: Int, modification: Modification) -> AnyPublisher<Bike, Error> {
+    func addModification(to bikeId: Int, modification: BikeModification) -> AnyPublisher<Bike, Error> {
         guard let url = URL(string: "\(networkManager.baseURL)/bikes/\(bikeId)/modifications") else {
-            return Fail(error: NetworkError.invalidURL).eraseToAnyPublisher()
+            return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
         }
+        
+        // Convert installDate String? -> Date (fallback to today)
+        let installationDate: Date = {
+            if let str = modification.installDate {
+                if str.contains("T") {
+                    let iso = ISO8601DateFormatter()
+                    if let d = iso.date(from: str) { return d }
+                }
+                let fmt = DateFormatter()
+                fmt.calendar = Calendar(identifier: .gregorian)
+                fmt.locale = Locale(identifier: "en_US_POSIX")
+                fmt.dateFormat = "yyyy-MM-dd"
+                if let d = fmt.date(from: str) { return d }
+            }
+            return Date()
+        }()
         
         let request = CreateModificationRequest(
             name: modification.name,
             description: modification.description,
             category: modification.category.rawValue,
-            installationDate: modification.installationDate,
-            cost: modification.cost,
-            installer: modification.installer,
-            warrantyInfo: modification.warrantyInfo
+            installationDate: installationDate,
+            cost: modification.cost ?? 0,
+            installer: nil,
+            warrantyInfo: nil
         )
         
         return networkManager.makeAuthenticatedRequest(url: url, method: "POST", body: request)

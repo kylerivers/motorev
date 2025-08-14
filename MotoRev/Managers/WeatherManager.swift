@@ -87,19 +87,25 @@ class WeatherManager: ObservableObject {
             ))
         }
         
-        // Heavy precipitation alert
-        if weather.precipitation > 0.2 {
-            newAlerts.append(WeatherAlert(
-                type: .rain,
-                location: coordinate,
-                severity: .moderate,
-                description: "Heavy precipitation: \(String(format: "%.1f", weather.precipitation)) in/hr"
-            ))
-        }
-                
-                DispatchQueue.main.async {
-            self.weatherAlerts = newAlerts
+        // No additional processing needed here
+    }
+    
+    private func cleanupOldAlerts(currentWeather: WeatherData) {
+        weatherAlerts.removeAll { alert in
+            switch alert.id {
+            case "rain-alert":
+                return currentWeather.precipitation <= 0.1
+            case "wind-alert":
+                return currentWeather.windSpeed <= 25
+            case "temperature-alert":
+                return currentWeather.temperature >= 32
+            case "visibility-alert":
+                return currentWeather.visibility >= 5000
+            default:
+                // Remove alerts older than 1 hour
+                return Date().timeIntervalSince(alert.timestamp) > 3600
             }
+        }
     }
     
     private func processWeatherForAlerts(_ weather: WeatherData) {
@@ -109,55 +115,64 @@ class WeatherManager: ObservableObject {
         
         // Rain alert
         if weather.precipitation > 0.1 {
-            newAlerts.append(WeatherAlert(
-                id: "rain-\(Date().timeIntervalSince1970)",
-                type: WeatherAlertType.rain,
-                severity: weather.precipitation > 0.5 ? AlertSeverity.high : AlertSeverity.medium,
-                title: "Rain Detected",
-                message: "Current precipitation: \(String(format: "%.1f", weather.precipitation))mm. Ride with caution.",
-                location: weather.locationName
-            ))
+            let alertId = "rain-alert"
+            // Only add if we don't already have this alert
+            if !weatherAlerts.contains(where: { $0.id == alertId }) {
+                newAlerts.append(WeatherAlert(
+                    id: alertId,
+                    type: WeatherAlertType.rain,
+                    location: locationManager.location?.coordinate ?? CLLocationCoordinate2D(latitude: 0, longitude: 0),
+                    severity: weather.precipitation > 0.5 ? AlertSeverity.high : AlertSeverity.medium,
+                    description: "Rain Detected: Current precipitation \(String(format: "%.1f", weather.precipitation))mm. Ride with caution."
+                ))
+            }
         }
         
         // Wind alert
         if weather.windSpeed > 25 {
-            newAlerts.append(WeatherAlert(
-                id: "wind-\(Date().timeIntervalSince1970)",
-                type: WeatherAlertType.wind,
-                severity: weather.windSpeed > 40 ? AlertSeverity.high : AlertSeverity.medium,
-                title: "High Winds",
-                message: "Wind speed: \(Int(weather.windSpeed)) mph. Strong crosswinds possible.",
-                location: weather.locationName
-            ))
+            let alertId = "wind-alert"
+            if !weatherAlerts.contains(where: { $0.id == alertId }) {
+                newAlerts.append(WeatherAlert(
+                    id: alertId,
+                    type: WeatherAlertType.wind,
+                    location: locationManager.location?.coordinate ?? CLLocationCoordinate2D(latitude: 0, longitude: 0),
+                    severity: weather.windSpeed > 40 ? AlertSeverity.high : AlertSeverity.medium,
+                    description: "High Winds: Wind speed \(Int(weather.windSpeed)) mph. Strong crosswinds possible."
+                ))
+            }
         }
         
         // Temperature alert
         if weather.temperature < 32 {
-            newAlerts.append(WeatherAlert(
-                id: "temp-\(Date().timeIntervalSince1970)",
-                type: WeatherAlertType.temperature,
-                severity: AlertSeverity.medium,
-                title: "Freezing Temperature",
-                message: "Temperature: \(Int(weather.temperature))°F. Watch for ice on roads.",
-                location: weather.locationName
-            ))
+            let alertId = "temperature-alert"
+            if !weatherAlerts.contains(where: { $0.id == alertId }) {
+                newAlerts.append(WeatherAlert(
+                    id: alertId,
+                    type: WeatherAlertType.temperature,
+                    location: locationManager.location?.coordinate ?? CLLocationCoordinate2D(latitude: 0, longitude: 0),
+                    severity: AlertSeverity.medium,
+                    description: "Freezing Temperature: \(Int(weather.temperature))°F. Watch for ice on roads."
+                ))
+            }
         }
         
         // Visibility alert
         if weather.visibility < 5000 {
-            newAlerts.append(WeatherAlert(
-                id: "visibility-\(Date().timeIntervalSince1970)",
-                type: WeatherAlertType.visibility,
-                severity: weather.visibility < 1000 ? AlertSeverity.high : AlertSeverity.medium,
-                title: "Poor Visibility",
-                message: "Visibility: \(Int(weather.visibility))m. Fog or heavy precipitation.",
-                location: weather.locationName
-            ))
+            let alertId = "visibility-alert"
+            if !weatherAlerts.contains(where: { $0.id == alertId }) {
+                newAlerts.append(WeatherAlert(
+                    id: alertId,
+                    type: WeatherAlertType.visibility,
+                    location: locationManager.location?.coordinate ?? CLLocationCoordinate2D(latitude: 0, longitude: 0),
+                    severity: weather.visibility < 1000 ? AlertSeverity.high : AlertSeverity.medium,
+                    description: "Poor Visibility: \(Int(weather.visibility))m. Fog or heavy precipitation."
+                ))
         }
         
         // Send notifications for new alerts
         for alert in newAlerts {
-            sendWeatherNotification(alert)
+            // TODO: Implement notification sending
+            print("Weather alert: \(alert.description)")
         }
         
         weatherAlerts.append(contentsOf: newAlerts)
@@ -167,15 +182,17 @@ class WeatherManager: ObservableObject {
         weatherAlerts.removeAll { $0.timestamp < yesterday }
     }
     
+    // End of processWeatherForAlerts function - adding missing closing brace
+    }
+    
     private func processWeatherAlerts(_ alerts: [OpenWeatherAlert]) {
         for alert in alerts {
             let weatherAlert = WeatherAlert(
                 id: "severe-\(alert.start)",
                 type: WeatherAlertType.severe,
+                location: locationManager.location?.coordinate ?? CLLocationCoordinate2D(latitude: 0, longitude: 0),
                 severity: AlertSeverity.high,
-                title: alert.event,
-                message: alert.description,
-                location: "Current Location"
+                description: "\(alert.event): \(alert.description)"
             )
             
             sendWeatherNotification(weatherAlert)
@@ -218,5 +235,27 @@ class WeatherManager: ObservableObject {
     
     func toggleWeatherAlerts() {
         isWeatherAlertsEnabled.toggle()
+    }
+    
+    func computeWindChillF(ambientF: Double, mph: Double) -> Double {
+        // NWS wind chill formula valid for T<=50F and v>=3 mph
+        guard ambientF <= 50, mph >= 3 else { return ambientF }
+        let vPow = pow(mph, 0.16)
+        return 35.74 + 0.6215*ambientF - 35.75*vPow + 0.4275*ambientF*vPow
+    }
+    
+    func clearAllAlerts() {
+        weatherAlerts.removeAll()
+    }
+    
+    func gearSuggestion(ambientF: Double, mph: Double) -> String {
+        let feels = computeWindChillF(ambientF: ambientF, mph: mph)
+        switch feels {
+        case ..<32: return "Full winter gear recommended"
+        case 32..<45: return "Gloves and base layer recommended"
+        case 45..<60: return "Light layers and windproof jacket"
+        case 60..<80: return "Standard gear with ventilation"
+        default: return "Hot conditions — hydrate and ventilate"
+        }
     }
 }

@@ -21,6 +21,10 @@ struct SearchView: View {
     @State private var suggestions: [SearchSuggestion] = []
     @State private var showingSuggestions = false
     
+    // Add friend fields
+    @State private var query: String = ""
+    @State private var addUsername: String = ""
+    
     enum SearchCategory: String, CaseIterable {
         case all = "All"
         case users = "Users"
@@ -32,7 +36,20 @@ struct SearchView: View {
     
     var body: some View {
         NavigationView {
-            VStack {
+            VStack(spacing: 0) {
+                AddFriendActionsBar()
+                    .padding(.horizontal)
+                HStack {
+                    TextField("Add by username", text: $addUsername)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                    Button("Add") {
+                        guard !addUsername.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+                        socialManager.addFriend(byUsername: addUsername.trimmingCharacters(in: .whitespaces))
+                        addUsername = ""
+                    }
+                }
+                .padding()
+                
                 // Search bar
                 HStack {
                     HStack {
@@ -1077,6 +1094,38 @@ struct SearchSuggestionsView: View {
             }
         }
         .background(Color(.systemBackground))
+    }
+}
+
+struct AddFriendActionsBar: View {
+    var body: some View {
+        HStack(spacing: 16) {
+            NavigationLink(destination: QRAddFriendView()) {
+                Label("Add via QR", systemImage: "qrcode.viewfinder")
+            }
+            NavigationLink(destination: NearbyAddView()) {
+                Label("Nearby", systemImage: "antenna.radiowaves.left.and.right")
+            }
+            NavigationLink(destination: NFCAddView()) {
+                Label("NFC", systemImage: "wave.3.right.circle.fill")
+            }
+        }
+        .padding(.vertical, 8)
+    }
+}
+
+struct QRAddFriendView: View {
+    var body: some View {
+        VStack(spacing: 24) {
+            Image(systemName: "qrcode")
+                .resizable()
+                .frame(width: 200, height: 200)
+                .padding()
+            Text("Scan to add friend")
+            Spacer()
+        }
+        .navigationTitle("Add Friend")
+        .padding()
     }
 }
 

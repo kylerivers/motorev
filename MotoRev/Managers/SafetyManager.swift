@@ -168,13 +168,17 @@ class SafetyManager: ObservableObject {
     private func reportEmergencyEvent() {
         guard let location = locationManager.location else { return }
         
-        networkManager.reportEmergencyEvent(
-            eventType: "crash",
+        let ice = loadICEPayload()
+        let payload = EmergencyReportRequest(
+            type: "crash",
             severity: "critical",
-            latitude: location.coordinate.latitude,
-            longitude: location.coordinate.longitude,
-            description: "Automatic crash detection triggered"
+            location: EmergencyLocation(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude),
+            description: "Automatic crash detection triggered",
+            automaticDetection: true,
+            sensorData: nil,
+            ice: ice
         )
+        networkManager.reportEmergency(payload)
         .receive(on: DispatchQueue.main)
         .sink(
             receiveCompletion: { completion in
@@ -182,7 +186,7 @@ class SafetyManager: ObservableObject {
                     print("❌ Failed to report emergency event: \(error)")
                 }
             },
-            receiveValue: { _ in
+                receiveValue: { (_: EmergencyReportResponse) in
                 print("✅ Emergency event reported to API")
             }
         )
@@ -404,6 +408,28 @@ class SafetyManager: ObservableObject {
         NotificationCenter.default.post(name: .emergencyTriggered, object: nil)
         
         print("🚨 Manual emergency response triggered")
+    }
+
+    func loadICEPayload() -> EmergencyICEPayload? {
+        // Map from stored medical info to ICE payload
+        let defaults = UserDefaults.standard
+        let bloodType = defaults.string(forKey: "medical_blood_type")
+        let allergies = defaults.stringArray(forKey: "medical_allergies")
+        let medications = defaults.stringArray(forKey: "medical_medications")
+        let medicalID = defaults.string(forKey: "medical_id")
+        let conditions = defaults.stringArray(forKey: "medical_conditions")
+        let notes = defaults.string(forKey: "medical_emergency_notes")
+        if bloodType == nil && (allergies?.isEmpty ?? true) && (medications?.isEmpty ?? true) && medicalID == nil && (conditions?.isEmpty ?? true) && (notes == nil) {
+            return nil
+        }
+        return EmergencyICEPayload(
+            bloodType: bloodType,
+            allergies: allergies,
+            medications: medications,
+            medicalID: medicalID,
+            conditions: conditions,
+            emergencyNotes: notes
+        )
     }
 }
 

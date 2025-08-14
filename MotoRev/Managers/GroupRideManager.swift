@@ -19,6 +19,22 @@ class GroupRideManager: ObservableObject {
     @Published var leaderboardData: [GroupMember] = []
     @Published var sharedRoute: SharedRoute?
     @Published var groupMessages: [GroupMessage] = []
+    @Published var isStealthModeEnabled = false
+    
+    func toggleStealthMode() { isStealthModeEnabled.toggle() }
+    
+    func detectDeviation(current: CLLocationCoordinate2D, route: [RouteWaypoint], thresholdMeters: Double = 80) -> Bool {
+        guard !route.isEmpty else { return false }
+        // Simple nearest waypoint check
+        let nearest = route.min { a, b in
+            let da = CLLocation(latitude: a.latitude, longitude: a.longitude).distance(from: CLLocation(latitude: current.latitude, longitude: current.longitude))
+            let db = CLLocation(latitude: b.latitude, longitude: b.longitude).distance(from: CLLocation(latitude: current.latitude, longitude: current.longitude))
+            return da < db
+        }
+        guard let nearest else { return false }
+        let d = CLLocation(latitude: nearest.latitude, longitude: nearest.longitude).distance(from: CLLocation(latitude: current.latitude, longitude: current.longitude))
+        return d > thresholdMeters
+    }
     
     // MARK: - Location Tracking
     @Published var isLocationSharingEnabled = true
@@ -109,25 +125,16 @@ class GroupRideManager: ObservableObject {
     }
     
     // MARK: - Group Ride Management
-    func createGroupRide(name: String, description: String? = nil, maxMembers: Int = 10, isPrivate: Bool = false, completion: @escaping (Result<GroupRide, Error>) -> Void) {
-        let createRequest = CreateGroupRideRequest(
-            name: name,
-            description: description,
-            maxMembers: maxMembers,
-            isPrivate: isPrivate
-        )
-        
-        makeAuthenticatedRequest(
-            endpoint: "/api/group-rides",
-            method: "POST",
-            body: createRequest
-        ) { [weak self] (result: Result<GroupRide, Error>) in
+    func createGroupRide(name: String, description: String?, isPrivate: Bool, completion: @escaping (Result<Void, Error>) -> Void) {
+        let req = CreateGroupRideRequest(name: name, description: description, maxMembers: 20, isPrivate: isPrivate)
+        makeAuthenticatedRequest(endpoint: "/api/group-rides", method: "POST", body: req) { (result: Result<GroupRide, Error>) in
             DispatchQueue.main.async {
                 switch result {
-                case .success(let groupRide):
-                    self?.currentGroupRide = groupRide
-                    self?.isInGroupRide = true
-                    completion(.success(groupRide))
+                case .success(let ride):
+                    self.currentGroupRide = ride
+                    self.isInGroupRide = true
+                    WebRTCManager.shared.connect(to: "group-\(ride.id)")
+                    completion(.success(()))
                 case .failure(let error):
                     completion(.failure(error))
                 }
@@ -278,6 +285,22 @@ class GroupRideManager: ObservableObject {
         }
     }
     
+    func shareCurrentRoute(name: String = "Shared Route") {
+        guard let route = LocationManager.shared.currentRoute else { return }
+        let waypoints = LocationManager.shared.routeWaypoints
+        let shared = SharedRoute(id: nil, name: name, waypoints: waypoints, totalDistance: route.distance, estimatedDuration: Int(route.expectedTravelTime), sharedBy: nil, sharedAt: nil)
+        shareRoute(shared) { _ in }
+        
+        // Persist on backend
+        if let groupRide = currentGroupRide {
+            struct UpdateRouteReq: Codable { let name: String; let waypoints: [RouteWaypoint]; let totalDistance: Double?; let estimatedDuration: Int? }
+            let req = UpdateRouteReq(name: name, waypoints: waypoints, totalDistance: route.distance, estimatedDuration: Int(route.expectedTravelTime))
+            makeAuthenticatedRequest(endpoint: "/api/group-rides/\(groupRide.id)/route", method: "POST", body: req) { (result: Result<MessageResponse, Error>) in
+                if case .failure(let e) = result { print("Route persist failed: \(e)") }
+            }
+        }
+    }
+    
     private func notifyMembersOfRouteUpdate(_ route: SharedRoute) {
         // Send notification to group members about route update
         let message = "Leader shared a new route: \(route.name)"
@@ -326,6 +349,24 @@ class GroupRideManager: ObservableObject {
         ) { (result: Result<RideInvitation, Error>) in
             DispatchQueue.main.async {
                 completion(result)
+            }
+        }
+    }
+    
+    func inviteUser(_ username: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        guard let groupRide = currentGroupRide else {
+            completion(.failure(NSError(domain: "GroupRideManager", code: 0, userInfo: [NSLocalizedDescriptionKey: "No active group ride"])));
+            return
+        }
+        struct InviteByUsername: Codable { let username: String }
+        makeAuthenticatedRequest(endpoint: "/api/group-rides/\(groupRide.id)/invite", method: "POST", body: InviteByUsername(username: username)) { (result: Result<MessageResponse, Error>) in
+            DispatchQueue.main.async {
+                switch result {
+                case .success:
+                    completion(.success(()))
+                case .failure(let error):
+                    completion(.failure(error))
+                }
             }
         }
     }
@@ -413,42 +454,54 @@ extension GroupRideManager {
     private func makeAuthenticatedRequest<T: Codable, U: Codable>(
         endpoint: String,
         method: String,
-        body: T,
+        body: T? = nil,
         completion: @escaping (Result<U, Error>) -> Void
     ) where U: Sendable {
         guard let token = networkManager.authToken else {
             completion(.failure(NSError(domain: "GroupRideManager", code: 401, userInfo: [NSLocalizedDescriptionKey: "No authentication token"])))
             return
         }
-        
-        guard let url = URL(string: "http://192.168.68.78:3000\(endpoint)") else {
-            completion(.failure(NSError(domain: "GroupRideManager", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
+
+        // Build URL from NetworkManager baseURL, avoiding duplicate "/api"
+        let base = networkManager.baseURL // e.g. https://.../api
+        let trimmedEndpoint = endpoint.hasPrefix("/api/") ? String(endpoint.dropFirst(5)) : endpoint.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let urlString = base.hasSuffix("/") ? base + trimmedEndpoint : base + "/" + trimmedEndpoint
+        guard let url = URL(string: urlString) else {
+            completion(.failure(NSError(domain: "GroupRideManager", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid URL: \(urlString)"])))
             return
         }
-        
+
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        
-        do {
-            request.httpBody = try JSONEncoder().encode(body)
-        } catch {
-            completion(.failure(error))
-            return
+
+        // Only attach body for non-GET methods
+        if method.uppercased() != "GET", let body = body {
+            do {
+                let encoder = JSONEncoder()
+                request.httpBody = try encoder.encode(body)
+            } catch {
+                completion(.failure(error))
+                return
+            }
         }
-        
+
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
                 completion(.failure(error))
                 return
             }
-            
-            guard let data = data else {
-                completion(.failure(NSError(domain: "GroupRideManager", code: 0, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
+
+            guard let http = response as? HTTPURLResponse else {
+                completion(.failure(NSError(domain: "GroupRideManager", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])))
                 return
             }
-            
+            guard (200..<300).contains(http.statusCode), let data = data else {
+                completion(.failure(NSError(domain: "GroupRideManager", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: "HTTP \(http.statusCode)"])))
+                return
+            }
+
             do {
                 let decoder = JSONDecoder()
                 let result = try decoder.decode(U.self, from: data)
@@ -458,12 +511,12 @@ extension GroupRideManager {
             }
         }.resume()
     }
-    
+
     private func makeAuthenticatedRequest<U: Codable>(
         endpoint: String,
         method: String,
         completion: @escaping (Result<U, Error>) -> Void
     ) where U: Sendable {
-        makeAuthenticatedRequest(endpoint: endpoint, method: method, body: EmptyBody(), completion: completion)
+        makeAuthenticatedRequest(endpoint: endpoint, method: method, body: Optional<EmptyBody>.none, completion: completion)
     }
 } 

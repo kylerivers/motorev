@@ -7,7 +7,7 @@ struct AddModificationView: View {
     @State private var cancellables = Set<AnyCancellable>()
     @State private var name = ""
     @State private var description = ""
-    @State private var category: Modification.Category = .performance
+    @State private var category: BikeModification.ModificationCategory = .performance
     @State private var installationDate = Date()
     @State private var cost: String = ""
     @State private var installer = ""
@@ -78,7 +78,7 @@ struct AddModificationView: View {
                         .foregroundColor(.secondary)
                     
                     Picker("Category", selection: $category) {
-                        ForEach(Modification.Category.allCases, id: \.self) { category in
+                        ForEach(BikeModification.ModificationCategory.allCases, id: \.self) { category in
                             Text(category.displayName).tag(category)
                         }
                     }
@@ -142,15 +142,20 @@ struct AddModificationView: View {
         
         isLoading = true
         
-        let modification = Modification(
+        // Format installation date as yyyy-MM-dd for model/string storage
+        let fmt = DateFormatter()
+        fmt.calendar = Calendar(identifier: .gregorian)
+        fmt.locale = Locale(identifier: "en_US_POSIX")
+        fmt.dateFormat = "yyyy-MM-dd"
+        let installDateString = fmt.string(from: installationDate)
+
+        let modification = BikeModification(
             id: UUID(),
             name: name,
             description: description.isEmpty ? nil : description,
-            category: category,
-            installationDate: installationDate,
-            cost: Double(cost) ?? 0.0,
-            installer: installer.isEmpty ? nil : installer,
-            warrantyInfo: warrantyInfo.isEmpty ? nil : warrantyInfo
+            cost: Double(cost),
+            installDate: installDateString,
+            category: category
         )
         
         bikeManager.addModification(to: bike.id, modification: modification)
@@ -171,53 +176,25 @@ struct AddModificationView: View {
     }
 }
 
-// MARK: - Supporting Models
-extension Modification {
-    enum Category: String, CaseIterable, Codable {
-        case performance = "performance"
-        case aesthetic = "aesthetic"
-        case safety = "safety"
-        case comfort = "comfort"
-        case storage = "storage"
-        case lighting = "lighting"
-        case exhaust = "exhaust"
-        case suspension = "suspension"
-        case brakes = "brakes"
-        case other = "other"
-        
-        var displayName: String {
-            switch self {
-            case .performance: return "Performance"
-            case .aesthetic: return "Aesthetic"
-            case .safety: return "Safety"
-            case .comfort: return "Comfort"
-            case .storage: return "Storage"
-            case .lighting: return "Lighting"
-            case .exhaust: return "Exhaust"
-            case .suspension: return "Suspension"
-            case .brakes: return "Brakes"
-            case .other: return "Other"
-            }
-        }
-        
-        var icon: String {
-            switch self {
-            case .performance: return "speedometer"
-            case .aesthetic: return "paintbrush"
-            case .safety: return "shield"
-            case .comfort: return "person.fill"
-            case .storage: return "bag"
-            case .lighting: return "lightbulb"
-            case .exhaust: return "flame"
-            case .suspension: return "arrow.up.and.down"
-            case .brakes: return "hand.raised"
-            case .other: return "wrench.and.screwdriver"
-            }
-        }
-    }
-}
-
 #Preview {
-    AddModificationView(bike: Bike.sampleBikes[0])
+    AddModificationView(bike: Bike(
+        id: 1,
+        userId: 1,
+        name: "My R1",
+        year: 2024,
+        make: "Yamaha",
+        model: "YZF-R1",
+        color: "Blue",
+        engineSize: "998cc",
+        bikeType: .sport,
+        currentMileage: 1500,
+        purchaseDate: "2024-01-15",
+        notes: "",
+        isPrimary: true,
+        photos: [],
+        modifications: [],
+        createdAt: "2024-01-15T00:00:00Z",
+        updatedAt: "2024-01-15T00:00:00Z"
+    ))
         .environmentObject(BikeManager.shared)
 } 

@@ -21,7 +21,8 @@ struct AddEditBikeView: View {
     @State private var isLoading = false
     @State private var showingAlert = false
     @State private var alertMessage = ""
-    @State private var purchaseDate: Date = Date()
+    @State private var purchaseDate: Date? = Date()
+    @State private var tempPurchaseDate: Date = Date()
     @State private var showingDatePicker = false
     
     let bike: Bike?
@@ -233,7 +234,7 @@ struct AddEditBikeView: View {
                         HStack {
                             Image(systemName: "calendar")
                                 .foregroundColor(.blue)
-                            Text(purchaseDate, style: .date)
+                            Text(purchaseDate ?? Date(), style: .date)
                                 .foregroundColor(.primary)
                             Spacer()
                             Image(systemName: "chevron.down")
@@ -257,7 +258,7 @@ struct AddEditBikeView: View {
             NavigationView {
                 DatePicker(
                     "Purchase Date",
-                    selection: $purchaseDate,
+                    selection: $tempPurchaseDate,
                     displayedComponents: .date
                 )
                 .datePickerStyle(.graphical)
@@ -271,10 +272,14 @@ struct AddEditBikeView: View {
                     }
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button("Done") {
+                            purchaseDate = tempPurchaseDate
                             showingDatePicker = false
                         }
                     }
                 }
+            }
+            .onAppear {
+                tempPurchaseDate = purchaseDate ?? Date()
             }
         }
     }
@@ -291,7 +296,20 @@ struct AddEditBikeView: View {
         engineSize = bike.engineSize ?? ""
         bikeType = bike.bikeType
         currentMileage = String(bike.currentMileage)
-        purchaseDate = bike.purchaseDate ?? Date()
+        // Parse purchaseDate string -> Date
+        if let pd = bike.purchaseDate {
+            if let iso = ISO8601DateFormatter().date(from: pd) {
+                purchaseDate = iso
+            } else {
+                let fmt = DateFormatter()
+                fmt.calendar = Calendar(identifier: .gregorian)
+                fmt.locale = Locale(identifier: "en_US_POSIX")
+                fmt.dateFormat = "yyyy-MM-dd"
+                purchaseDate = fmt.date(from: pd) ?? Date()
+            }
+        } else {
+            purchaseDate = nil
+        }
         notes = bike.notes ?? ""
         isPrimary = bike.isPrimary
     }
@@ -337,7 +355,16 @@ struct AddEditBikeView: View {
                 engineSize: engineSize.isEmpty ? nil : engineSize,
                 bikeType: bikeType,
                 currentMileage: Int(currentMileage) ?? 0,
-                purchaseDate: purchaseDate,
+                purchaseDate: {
+                    if let d = purchaseDate {
+                        let fmt = DateFormatter()
+                        fmt.calendar = Calendar(identifier: .gregorian)
+                        fmt.locale = Locale(identifier: "en_US_POSIX")
+                        fmt.dateFormat = "yyyy-MM-dd"
+                        return fmt.string(from: d)
+                    }
+                    return nil
+                }(),
                 notes: notes.isEmpty ? nil : notes,
                 isPrimary: isPrimary,
                 photos: images,
@@ -368,7 +395,16 @@ struct AddEditBikeView: View {
                 engineSize: engineSize.isEmpty ? nil : engineSize,
                 bikeType: bikeType,
                 currentMileage: Int(currentMileage) ?? 0,
-                purchaseDate: purchaseDate,
+                purchaseDate: {
+                    if let d = purchaseDate {
+                        let fmt = DateFormatter()
+                        fmt.calendar = Calendar(identifier: .gregorian)
+                        fmt.locale = Locale(identifier: "en_US_POSIX")
+                        fmt.dateFormat = "yyyy-MM-dd"
+                        return fmt.string(from: d)
+                    }
+                    return nil
+                }(),
                 notes: notes.isEmpty ? nil : notes,
                 isPrimary: isPrimary,
                 photos: images,

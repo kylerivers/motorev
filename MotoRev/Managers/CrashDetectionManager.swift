@@ -14,6 +14,9 @@ class CrashDetectionManager: NSObject, ObservableObject {
     @Published var crashDetected = false
     @Published var emergencyCountdown = 0
     @Published var lastCrashEvent: CrashEvent?
+    @Published var countdownSeconds: Int = 45
+    @Published var isBlackBoxEnabled: Bool = true
+    @Published var recordAudioSample: Bool = false
     
     // MARK: - Core Motion & Sensors
     private let motionManager = CMMotionManager()
@@ -33,6 +36,7 @@ class CrashDetectionManager: NSObject, ObservableObject {
     private var emergencyTimer: Timer?
     private var speechSynthesizer = AVSpeechSynthesizer()
     private var audioPlayer: AVAudioPlayer?
+    private var recorder: AVAudioRecorder?
     
     // MARK: - Data Storage
     private var accelerationBuffer: [CMAcceleration] = []
@@ -296,6 +300,11 @@ class CrashDetectionManager: NSObject, ObservableObject {
         // Start emergency countdown
         startEmergencyCountdown()
         
+        // Start short audio sample if enabled
+        if recordAudioSample {
+            startAudioSampleRecording()
+        }
+        
         // Play loud alert sound
         playEmergencyAlert()
         
@@ -307,7 +316,7 @@ class CrashDetectionManager: NSObject, ObservableObject {
     }
     
     private func startEmergencyCountdown() {
-        emergencyCountdown = Int(CrashThresholds.confirmationTime)
+        emergencyCountdown = countdownSeconds
         
         emergencyTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
             guard let self = self else {
@@ -356,6 +365,34 @@ class CrashDetectionManager: NSObject, ObservableObject {
     private func initiateEmergencyResponse() {
         print("🆘 INITIATING EMERGENCY RESPONSE")
         
+        // Upload black box recording (last 20–30 seconds)
+        uploadBlackBoxRecording()
+        
+        // Report emergency to backend
+        if let loc = locationBuffer.last?.coordinate {
+            let ice = SafetyManager.shared.loadICEPayload()
+            let payload = EmergencyReportRequest(
+                type: "crash",
+                severity: "high",
+                location: EmergencyLocation(latitude: loc.latitude, longitude: loc.longitude),
+                description: "Automatic crash detection",
+                automaticDetection: true,
+                sensorData: [
+                    "impactMagnitude": lastCrashEvent?.magnitude ?? 0,
+                    "probability": lastCrashEvent?.probability ?? 0
+                ],
+                ice: ice
+            )
+            _ = NetworkManager.shared.reportEmergency(payload)
+                .sink(receiveCompletion: { completion in
+                    if case .failure(let error) = completion {
+                        print("❌ Failed to report emergency: \(error)")
+                    }
+                }, receiveValue: { _ in
+                    print("✅ Emergency reported to backend")
+                })
+        }
+        
         // Call emergency services
         callEmergencyServices()
         
@@ -364,6 +401,56 @@ class CrashDetectionManager: NSObject, ObservableObject {
         
         // Continue location tracking
         startContinuousLocationTracking()
+    }
+    
+    private func uploadBlackBoxRecording() {
+        guard lastCrashEvent != nil else { return }
+        guard isBlackBoxEnabled else { return }
+        if PremiumManager.shared.isPremium == false { return }
+        
+        // Prepare series from buffers (trim to last ~30 samples)
+        let speedSeries: [Double] = locationBuffer.suffix(30).map { max($0.speed * 2.237, 0) }
+        let leanSeries: [Double] = gyroBuffer.suffix(30).map { sqrt($0.x*$0.x + $0.y*$0.y) }
+        let accelSeries: [Double] = accelerationBuffer.suffix(30).map { sqrt($0.x*$0.x + $0.y*$0.y + $0.z*$0.z) }
+        let brakingSeries: [Double] = []
+        let gpsSeries: [[Double]] = locationBuffer.suffix(30).map { [$0.coordinate.latitude, $0.coordinate.longitude, $0.timestamp.timeIntervalSince1970] }
+        
+        let request = CreateRideRecordingRequest(
+            rideId: nil,
+            durationSeconds: 30,
+            speedSeries: speedSeries,
+            leanAngleSeries: leanSeries,
+            accelerationSeries: accelSeries,
+            brakingSeries: brakingSeries,
+            gpsSeries: gpsSeries,
+            audioSampleUrl: nil,
+            notes: "Auto-upload after crash detection"
+        )
+        
+        _ = NetworkManager.shared.uploadRideRecording(request)
+            .sink(receiveCompletion: { completion in
+                if case .failure(let error) = completion {
+                    print("❌ Failed to upload black box: \(error)")
+                }
+            }, receiveValue: { _ in
+                print("✅ Black box recording uploaded")
+            })
+    }
+    
+    private func startAudioSampleRecording() {
+        let settings: [String: Any] = [
+            AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
+            AVSampleRateKey: 44100,
+            AVNumberOfChannelsKey: 1,
+            AVEncoderAudioQualityKey: AVAudioQuality.medium.rawValue
+        ]
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("motorev_crash_sample.m4a")
+        do {
+            recorder = try AVAudioRecorder(url: url, settings: settings)
+            recorder?.record(forDuration: 5)
+        } catch {
+            print("Audio sample record error: \(error)")
+        }
     }
     
     // MARK: - Emergency Services
