@@ -305,4 +305,62 @@ CREATE INDEX IF NOT EXISTS idx_hazard_reports_location ON hazard_reports(latitud
 CREATE INDEX IF NOT EXISTS idx_hazard_reports_status ON hazard_reports(status);
 CREATE INDEX IF NOT EXISTS idx_riding_packs_created_by ON riding_packs(created_by);
 CREATE INDEX IF NOT EXISTS idx_pack_members_pack_id ON pack_members(pack_id);
-CREATE INDEX IF NOT EXISTS idx_pack_members_user_id ON pack_members(user_id); 
+CREATE INDEX IF NOT EXISTS idx_pack_members_user_id ON pack_members(user_id);
+
+-- Completed rides table for ride completion tracking
+CREATE TABLE IF NOT EXISTS completed_rides (
+    id TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    ride_type TEXT NOT NULL,
+    start_time DATETIME NOT NULL,
+    end_time DATETIME NOT NULL,
+    duration REAL NOT NULL, -- in seconds
+    distance REAL NOT NULL, -- in meters
+    average_speed REAL NOT NULL, -- in mph
+    max_speed REAL NOT NULL, -- in mph
+    route_data TEXT, -- JSON array of route points
+    safety_score INTEGER DEFAULT 100,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Add user statistics columns to users table
+ALTER TABLE users ADD COLUMN total_rides INTEGER DEFAULT 0;
+ALTER TABLE users ADD COLUMN total_ride_time REAL DEFAULT 0.0; -- in hours
+
+-- Create index for completed rides
+CREATE INDEX IF NOT EXISTS idx_completed_rides_user_id ON completed_rides(user_id);
+CREATE INDEX IF NOT EXISTS idx_completed_rides_start_time ON completed_rides(start_time);
+
+-- Ride events table for events feature
+CREATE TABLE IF NOT EXISTS ride_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT,
+    start_time DATETIME NOT NULL,
+    end_time DATETIME,
+    location TEXT NOT NULL,
+    organizer_id INTEGER NOT NULL,
+    max_participants INTEGER,
+    is_public BOOLEAN DEFAULT true,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (organizer_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Event participants table
+CREATE TABLE IF NOT EXISTS event_participants (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (event_id) REFERENCES ride_events(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE(event_id, user_id)
+);
+
+-- Create indexes for events
+CREATE INDEX IF NOT EXISTS idx_ride_events_start_time ON ride_events(start_time);
+CREATE INDEX IF NOT EXISTS idx_ride_events_organizer ON ride_events(organizer_id);
+CREATE INDEX IF NOT EXISTS idx_event_participants_event ON event_participants(event_id);
+CREATE INDEX IF NOT EXISTS idx_event_participants_user ON event_participants(user_id); 

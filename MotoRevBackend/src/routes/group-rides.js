@@ -318,33 +318,34 @@ router.get('/:packId', authenticateToken, async (req, res) => {
   }
 });
 
-// Update group ride route
-router.put('/:packId/route', authenticateToken, async (req, res) => {
+// Update/share planned route for a group ride
+router.post('/:packId/route', authenticateToken, async (req, res) => {
   try {
     const { packId } = req.params;
-    const { route } = req.body;
+    const { name, waypoints, totalDistance, estimatedDuration } = req.body;
 
-    // Check if user is leader or co-leader
+    // Ensure user is leader or co-leader
     const membership = await get(`
       SELECT role FROM pack_members WHERE pack_id = ? AND user_id = ? AND status = 'active'
     `, [packId, req.user.userId]);
 
-    if (!membership || !['leader', 'co_leader'].includes(membership.role)) {
-      return res.status(403).json({ error: 'Only leaders can update the route' });
+    if (!membership || !['leader','co_leader'].includes(membership.role)) {
+      return res.status(403).json({ error: 'Only leaders can update route' });
     }
 
-    // Update route
-    await run(`
-      UPDATE riding_packs SET planned_route = ?, updated_at = NOW() WHERE id = ?
-    `, [JSON.stringify(route), packId]);
+    const route = {
+      name: name || 'Shared Route',
+      waypoints: waypoints || [],
+      totalDistance: totalDistance || null,
+      estimatedDuration: estimatedDuration || null,
+      updatedAt: new Date().toISOString()
+    };
 
-    res.json({
-      success: true,
-      message: 'Route updated successfully'
-    });
+    await run(`UPDATE riding_packs SET planned_route = ?, updated_at = NOW() WHERE id = ?`, [JSON.stringify(route), packId]);
 
-  } catch (error) {
-    console.error('Update route error:', error);
+    res.json({ message: 'Route updated', route });
+  } catch (e) {
+    console.error('Update route error:', e);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

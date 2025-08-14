@@ -3,6 +3,8 @@ const { query, get, run } = require('../database/connection');
 const authRouter = require('./auth');
 const { authenticateToken } = authRouter;
 const router = express.Router();
+const bodyParser = require('body-parser');
+router.use(bodyParser.json({ limit: '2mb' }));
 
 // Report emergency event
 router.post('/emergency', authenticateToken, async (req, res) => {
@@ -20,19 +22,20 @@ router.post('/emergency', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Type, severity, and location are required' });
     }
 
+    // Persist emergency event
     const result = await run(`
       INSERT INTO emergency_events (
-        user_id, type, severity, location, description, 
-        automatic_detection, sensor_data, status, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, 'active', NOW())
+        user_id, ride_id, event_type, severity, latitude, longitude, description, 
+        auto_detected, is_resolved, created_at
+      ) VALUES (?, NULL, ?, ?, ?, ?, ?, ?, 0, NOW())
     `, [
       req.user.userId,
       type,
       severity,
-      JSON.stringify(location),
+      parseFloat(location.latitude),
+      parseFloat(location.longitude),
       description || null,
-      automaticDetection,
-      sensorData ? JSON.stringify(sensorData) : null
+      automaticDetection ? 1 : 0
     ]);
 
     const emergencyId = result.insertId;
@@ -41,9 +44,27 @@ router.post('/emergency', authenticateToken, async (req, res) => {
       SELECT * FROM emergency_events WHERE id = ?
     `, [emergencyId]);
 
+    // Store/share ICE snapshot for responders
+    const ice = req.body.ice || null;
+    if (ice) {
+      await run(`
+        INSERT INTO emergency_ice (emergency_id, blood_type, allergies, medications, medical_id, conditions, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `, [
+        emergencyId,
+        ice.bloodType || null,
+        ice.allergies ? JSON.stringify(ice.allergies) : null,
+        ice.medications ? JSON.stringify(ice.medications) : null,
+        ice.medicalID || null,
+        ice.conditions ? JSON.stringify(ice.conditions) : null,
+        ice.emergencyNotes || null
+      ]);
+    }
+
     res.status(201).json({ 
       message: 'Emergency event reported successfully',
-      emergency: emergency 
+      emergency,
+      iceShared: !!ice
     });
   } catch (error) {
     console.error('Report emergency error:', error);

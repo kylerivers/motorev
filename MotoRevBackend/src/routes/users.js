@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const router = express.Router();
+const { verifyTransaction } = require('../utils/appStoreVerifier');
 
 // Helper function to save base64 image to file
 async function saveBase64Image(base64Data, userId) {
@@ -462,6 +463,90 @@ router.get('/:userId/stats', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Get user stats error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get a user's bikes (friends' garage)
+router.get('/:userId/bikes', authenticateToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const bikes = await query(`
+      SELECT id, user_id, name, year, make, model, color, engine_size, bike_type, current_mileage,
+             purchase_date, notes, is_primary, photos, modifications, created_at, updated_at
+      FROM bikes WHERE user_id = ?
+      ORDER BY is_primary DESC, created_at DESC
+    `, [userId]);
+
+    const mapped = bikes.map(b => ({
+      id: b.id,
+      userId: b.user_id,
+      name: b.name,
+      year: b.year,
+      make: b.make,
+      model: b.model,
+      color: b.color,
+      engineSize: b.engine_size,
+      bikeType: b.bike_type,
+      currentMileage: b.current_mileage,
+      purchaseDate: b.purchase_date,
+      notes: b.notes,
+      isPrimary: !!b.is_primary,
+      photos: b.photos ? JSON.parse(b.photos) : [],
+      modifications: b.modifications ? JSON.parse(b.modifications) : [],
+      createdAt: b.created_at,
+      updatedAt: b.updated_at
+    }));
+
+    res.json({ bikes: mapped });
+  } catch (e) {
+    console.error('Get user bikes error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Register push token
+router.post('/push-token', authenticateToken, async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ error: 'Token required' });
+    await run(`INSERT IGNORE INTO push_tokens (user_id, token) VALUES (?, ?)`, [req.user.userId, token]);
+    res.json({ message: 'Token registered' });
+  } catch (e) {
+    console.error('Register push token error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Verify StoreKit receipt and upgrade user (App Store Server API scaffold)
+router.post('/verify-receipt', authenticateToken, async (req, res) => {
+  try {
+    const { productId, transactionId, payload } = req.body;
+    if (!productId) return res.status(400).json({ error: 'productId required' });
+
+    // Save receipt payload first
+    await run('INSERT INTO subscription_receipts (user_id, product_id, transaction_id, payload, verified) VALUES (?, ?, ?, ?, 0)', [req.user.userId, productId, transactionId || null, payload || null]);
+
+    const useRealVerify = process.env.APPSTORE_PRIVATE_KEY && process.env.APPSTORE_ISSUER_ID && process.env.APPSTORE_KEY_ID;
+
+    if (useRealVerify) {
+      // Call App Store Server API to verify purchase
+      const result = await verifyTransaction(transactionId);
+      if (result.ok) {
+        await run('UPDATE subscription_receipts SET verified = 1 WHERE user_id = ? AND product_id = ? AND transaction_id = ?', [req.user.userId, productId, transactionId || null]);
+      } else {
+        return res.status(400).json({ error: 'Receipt verification failed', detail: result.reason });
+      }
+    } else {
+      // Fallback stub verification
+      await run('UPDATE subscription_receipts SET verified = 1 WHERE user_id = ? AND product_id = ? AND (transaction_id = ? OR transaction_id IS NULL)', [req.user.userId, productId, transactionId || null]);
+    }
+
+    await run('UPDATE users SET is_premium = 1, subscription_tier = "pro", updated_at = NOW() WHERE id = ?', [req.user.userId]);
+    res.json({ message: 'Receipt verified and user upgraded' });
+  } catch (e) {
+    console.error('Verify receipt error:', e);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

@@ -1,6 +1,10 @@
 const express = require('express');
 const { query, get, run } = require('../database/connection');
+const { authenticateToken, requireAdmin, requireSuperAdmin } = require('../middleware/auth');
 const router = express.Router();
+
+// Require auth/admin for all admin routes
+router.use(authenticateToken, requireAdmin);
 
 // Whitelist allowed tables for security
 const allowedTables = [
@@ -9,6 +13,87 @@ const allowedTables = [
   'location_updates', 'riding_packs', 'pack_members', 'user_sessions',
   'story_views', 'hazard_confirmations'
 ];
+
+// Users management
+router.get('/users', async (req, res) => {
+  try {
+    const { search = '', limit = 50, offset = 0 } = req.query;
+    const like = `%${search}%`;
+    const rows = await query(`
+      SELECT id, username, email, first_name, last_name, role, is_premium, subscription_tier, status, created_at
+      FROM users
+      WHERE username LIKE ? OR email LIKE ? OR first_name LIKE ? OR last_name LIKE ?
+      ORDER BY created_at DESC
+      LIMIT ? OFFSET ?
+    `, [like, like, like, like, parseInt(limit), parseInt(offset)]);
+    res.json({ users: rows });
+  } catch (e) {
+    console.error('List users error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.put('/users/:id/role', requireSuperAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+    if (!['user','admin','super_admin'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+    await run('UPDATE users SET role = ?, updated_at = NOW() WHERE id = ?', [role, id]);
+    res.json({ message: 'Role updated' });
+  } catch (e) {
+    console.error('Update role error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.put('/users/:id/subscription', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { tier } = req.body; // 'standard' | 'pro'
+    if (!['standard','pro'].includes(tier)) {
+      return res.status(400).json({ error: 'Invalid tier' });
+    }
+    await run('UPDATE users SET subscription_tier = ?, is_premium = ?, updated_at = NOW() WHERE id = ?', [tier, tier === 'pro', id]);
+    res.json({ message: 'Subscription updated' });
+  } catch (e) {
+    console.error('Update subscription error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Update hazard status
+router.put('/hazards/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body; // 'active','resolved','duplicate','false_report'
+    if (!['active','resolved','duplicate','false_report'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid hazard status' });
+    }
+    const result = await run('UPDATE hazard_reports SET status = ?, updated_at = NOW() WHERE id = ?', [status, id]);
+    if (result.affectedRows === 0) return res.status(404).json({ error: 'Hazard not found' });
+    res.json({ message: 'Hazard status updated' });
+  } catch (e) {
+    console.error('Update hazard status error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Resolve/Unresolve emergency event
+router.put('/emergencies/:id/resolve', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { resolved } = req.body; // boolean
+    const isResolved = resolved ? 1 : 0;
+    const result = await run('UPDATE emergency_events SET is_resolved = ?, resolved_at = CASE WHEN ? = 1 THEN NOW() ELSE NULL END WHERE id = ?', [isResolved, isResolved, id]);
+    if (result.affectedRows === 0) return res.status(404).json({ error: 'Emergency event not found' });
+    res.json({ message: 'Emergency resolution updated' });
+  } catch (e) {
+    console.error('Resolve emergency error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // Get table data with pagination
 router.get('/table/:tableName', async (req, res) => {
@@ -20,7 +105,6 @@ router.get('/table/:tableName', async (req, res) => {
       return res.status(400).json({ error: 'Invalid table name' });
     }
     
-    // Sanitize parameters
     const sanitizedLimit = Math.max(1, Math.min(1000, parseInt(limit) || 100));
     const sanitizedOffset = Math.max(0, parseInt(offset) || 0);
     
@@ -211,7 +295,6 @@ router.delete('/table/:tableName', async (req, res) => {
   try {
     const { tableName } = req.params;
     
-    // More restrictive whitelist for clearing tables
     const clearableeTables = [
       'posts', 'stories', 'rides', 'emergency_events', 
       'hazard_reports', 'followers', 'post_likes', 'post_comments',
