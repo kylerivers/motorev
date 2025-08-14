@@ -1,0 +1,14 @@
+{
+  "name": "motorev-monorepo",
+  "version": "1.0.0",
+  "description": "MotoRev mobile app with backend API",
+  "scripts": {
+    "start": "cd MotoRevBackend && npm start",
+    "install": "cd MotoRevBackend && npm install",
+    "build": "cd MotoRevBackend && npm install"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}
