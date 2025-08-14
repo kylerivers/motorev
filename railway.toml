@@ -1,9 +1,9 @@
 [build]
 builder = "nixpacks"
-buildCommand = "cd MotoRevBackend && npm install"
+workingDirectory = "MotoRevBackend"
 
 [deploy]
-startCommand = "cd MotoRevBackend && npm start"
+startCommand = "npm start"
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
