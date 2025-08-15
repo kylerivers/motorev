@@ -171,6 +171,30 @@ async function ensureAdditionalColumns() {
       console.log(`   - Could not verify/add pack_members.${column.name}: ${e.message}`);
     }
   }
+
+  // Check and add user statistics columns
+  const userStatsColumns = [
+    { name: 'total_rides', ddl: 'ALTER TABLE users ADD COLUMN total_rides INT DEFAULT 0' },
+    { name: 'total_miles', ddl: 'ALTER TABLE users ADD COLUMN total_miles FLOAT DEFAULT 0.0' },
+    { name: 'total_ride_time', ddl: 'ALTER TABLE users ADD COLUMN total_ride_time FLOAT DEFAULT 0.0' }
+  ];
+  
+  for (const column of userStatsColumns) {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = ?`,
+        [column.name]
+      );
+      if (rows.length === 0) {
+        console.log(`   - Adding users.${column.name}`);
+        await pool.execute(column.ddl);
+      } else {
+        console.log(`   - users.${column.name} already exists`);
+      }
+    } catch (e) {
+      console.log(`   - Could not verify/add users.${column.name}: ${e.message}`);
+    }
+  }
   
   console.log('✅ Additional columns verified');
 }

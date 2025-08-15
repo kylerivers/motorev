@@ -535,7 +535,5 @@ CREATE TABLE IF NOT EXISTS completed_rides (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Add user statistics columns
-ALTER TABLE users ADD COLUMN total_rides INT DEFAULT 0;
-ALTER TABLE users ADD COLUMN total_miles FLOAT DEFAULT 0.0;
-ALTER TABLE users ADD COLUMN total_ride_time FLOAT DEFAULT 0.0; -- in hours 
+-- User statistics columns are added dynamically in setupDatabase.js ensureAdditionalColumns()
+-- to avoid duplicate column errors in production 
