@@ -24,12 +24,12 @@ router.get('/', authenticateToken, async (req, res) => {
         const events = await query(`
             SELECT e.*, u.username as organizer_username,
                    COUNT(ep.user_id) as participant_count,
-                   CASE WHEN ep.user_id = ? THEN 1 ELSE 0 END as is_participating
+                   MAX(CASE WHEN ep.user_id = ? THEN 1 ELSE 0 END) as is_participating
             FROM ride_events e
             JOIN users u ON e.organizer_id = u.id
             LEFT JOIN event_participants ep ON e.id = ep.event_id
             WHERE e.is_public = 1 OR e.organizer_id = ? OR ep.user_id = ?
-            GROUP BY e.id, u.username
+            GROUP BY e.id, u.username, u.id, e.organizer_id, e.title, e.description, e.start_time, e.end_time, e.location, e.max_participants, e.is_public, e.created_at
             ORDER BY e.start_time ASC
         `, [userId, userId, userId]);
         
@@ -50,12 +50,12 @@ router.get('/:id', authenticateToken, async (req, res) => {
         const events = await query(`
             SELECT e.*, u.username as organizer_username,
                    COUNT(ep.user_id) as participant_count,
-                   CASE WHEN ep.user_id = ? THEN 1 ELSE 0 END as is_participating
+                   MAX(CASE WHEN ep.user_id = ? THEN 1 ELSE 0 END) as is_participating
             FROM ride_events e
             JOIN users u ON e.organizer_id = u.id
             LEFT JOIN event_participants ep ON e.id = ep.event_id
             WHERE e.id = ? AND (e.is_public = 1 OR e.organizer_id = ? OR ep.user_id = ?)
-            GROUP BY e.id, u.username
+            GROUP BY e.id, u.username, u.id, e.organizer_id, e.title, e.description, e.start_time, e.end_time, e.location, e.max_participants, e.is_public, e.created_at
         `, [userId, eventId, userId, userId]);
         
         if (!events || events.length === 0) {
