@@ -74,7 +74,7 @@ struct RideEventsView: View {
                 
 
             }
-            .navigationTitle("Events, Rides & Routes")
+            .navigationTitle("Ride Hub")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { 

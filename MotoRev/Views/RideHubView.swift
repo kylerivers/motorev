@@ -123,10 +123,10 @@ struct RideHubView: View {
                             .environmentObject(LocationManager.shared)
                         ) {
                             VStack(spacing: 4) {
-                                Image(systemName: "calendar.badge.plus")
+                                Image(systemName: "figure.motorcycle")
                                     .font(.title2)
                                     .foregroundColor(.purple)
-                                Text("Events")
+                                Text("Ride Hub")
                                     .font(.caption)
                                     .fontWeight(.semibold)
                                     .foregroundColor(.primary)
