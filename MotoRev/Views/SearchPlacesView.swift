@@ -1,469 +1,449 @@
 import SwiftUI
 import MapKit
+import CoreLocation
 
 struct SearchPlacesView: View {
     @EnvironmentObject var networkManager: NetworkManager
     @EnvironmentObject var locationManager: LocationManager
-    @State private var searchText = ""
-    @State private var searchResults: [SearchResult] = []
-    @State private var places: [Place] = []
-    @State private var selectedPlace: Place?
-    @State private var showingSubmitPlace = false
-    @State private var isLoading = false
-    @State private var selectedTab: SearchTab = .search
     
-    enum SearchTab: String, CaseIterable {
-        case search = "Search"
-        case places = "Places"
-        case submit = "Submit"
-    }
+    @State private var searchText = ""
+    @State private var searchResults: [PlaceSearchResult] = []
+    @State private var isLoading = false
+    @State private var selectedTab = 0
+    @State private var region = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
+        span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+    )
+    @State private var showingSubmitPlace = false
     
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
-                // Tab selection
-                Picker("", selection: $selectedTab) {
-                    ForEach(SearchTab.allCases, id: \.self) { tab in
-                        Text(tab.rawValue).tag(tab)
-                    }
+                // Search Bar
+                searchBarView
+                
+                // Tab Selector
+                Picker("Search Type", selection: $selectedTab) {
+                    Text("Places").tag(0)
+                    Text("Events").tag(1)
+                    Text("Routes").tag(2)
                 }
                 .pickerStyle(SegmentedPickerStyle())
-                .padding()
+                .padding(.horizontal)
                 
-                // Tab content
+                // Content based on selected tab
                 TabView(selection: $selectedTab) {
-                    searchTabContent
-                        .tag(SearchTab.search)
+                    // Places Tab
+                    placesSearchView
+                        .tag(0)
                     
-                    placesTabContent
-                        .tag(SearchTab.places)
+                    // Events Tab
+                    eventsSearchView
+                        .tag(1)
                     
-                    submitPlaceTabContent
-                        .tag(SearchTab.submit)
+                    // Routes Tab
+                    routesSearchView
+                        .tag(2)
                 }
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
             }
-            .navigationTitle("Search & Places")
-            .navigationBarTitleDisplayMode(.large)
+        }
+        .navigationTitle("Search")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Submit Place") {
+                    showingSubmitPlace = true
+                }
+                .font(.subheadline)
+            }
+        }
+        .sheet(isPresented: $showingSubmitPlace) {
+            SubmitPlaceView()
+                .environmentObject(networkManager)
+                .environmentObject(locationManager)
         }
         .onAppear {
-            loadPlaces()
+            if let userLocation = locationManager.location {
+                region.center = userLocation.coordinate
+            }
         }
     }
     
-    // MARK: - Tab Content Views
-    
-    private var searchTabContent: some View {
-        VStack {
-            // Search bar
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(.gray)
-                TextField("Search places, businesses, events...", text: $searchText)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .onSubmit {
-                        performSearch()
-                    }
-                
-                Button("Search") {
+    // MARK: - Search Bar
+    private var searchBarView: some View {
+        HStack {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(.gray)
+            
+            TextField("Search places, events, or routes...", text: $searchText)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .onSubmit {
                     performSearch()
                 }
-                .disabled(searchText.isEmpty)
-            }
-            .padding()
+                .onChange(of: searchText) { _, newValue in
+                    if newValue.isEmpty {
+                        searchResults = []
+                    }
+                }
             
+            if !searchText.isEmpty {
+                Button("Clear") {
+                    searchText = ""
+                    searchResults = []
+                }
+                .font(.caption)
+                .foregroundColor(.blue)
+            }
+        }
+        .padding()
+    }
+    
+    // MARK: - Places Search View
+    private var placesSearchView: some View {
+        VStack {
             if isLoading {
                 ProgressView("Searching...")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if searchResults.isEmpty && !searchText.isEmpty {
-                VStack(spacing: 12) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 48))
+                VStack(spacing: 16) {
+                    Image(systemName: "location.slash")
+                        .font(.system(size: 50))
                         .foregroundColor(.gray)
-                    Text("No Results Found")
+                    
+                    Text("No places found")
                         .font(.headline)
                         .foregroundColor(.secondary)
-                    Text("Try searching for businesses, places, or events")
+                    
+                    Text("Try a different search term or submit this as a new place")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if !searchResults.isEmpty {
-                List(searchResults) { result in
-                    SearchResultRowView(result: result) {
-                        // Handle selection
+                    
+                    Button("Submit '\(searchText)' as Place") {
+                        showingSubmitPlace = true
                     }
+                    .buttonStyle(.borderedProminent)
                 }
-            } else {
-                VStack(spacing: 12) {
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if searchResults.isEmpty {
+                VStack(spacing: 16) {
                     Image(systemName: "location.magnifyingglass")
-                        .font(.system(size: 48))
+                        .font(.system(size: 50))
                         .foregroundColor(.gray)
+                    
                     Text("Search for Places")
                         .font(.headline)
                         .foregroundColor(.secondary)
-                    Text("Find businesses, events, and motorcycle meetup spots")
+                    
+                    Text("Find motorcycle meetup spots, scenic routes, gas stations, and more")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-        }
-    }
-    
-    private var placesTabContent: some View {
-        VStack {
-            if places.isEmpty {
-                VStack(spacing: 12) {
-                    Image(systemName: "mappin.and.ellipse")
-                        .font(.system(size: 48))
-                        .foregroundColor(.gray)
-                    Text("No Places Yet")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
-                    Text("Submit a place to get started!")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
+                .padding()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                List(places) { place in
-                    PlaceRowView(place: place) {
-                        selectedPlace = place
-                    }
+                // Search Results
+                List(searchResults) { result in
+                    PlaceResultRow(result: result)
                 }
             }
         }
-        .sheet(item: $selectedPlace) { place in
-            PlaceDetailView(place: place)
+    }
+    
+    // MARK: - Events Search View
+    private var eventsSearchView: some View {
+        VStack {
+            if searchText.isEmpty {
+                VStack(spacing: 16) {
+                    Image(systemName: "calendar.circle")
+                        .font(.system(size: 50))
+                        .foregroundColor(.gray)
+                    
+                    Text("Search for Events")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                    
+                    Text("Find motorcycle events, group rides, and meetups at specific places")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                // Events search results would go here
+                VStack(spacing: 16) {
+                    Image(systemName: "calendar.badge.exclamationmark")
+                        .font(.system(size: 50))
+                        .foregroundColor(.orange)
+                    
+                    Text("Events Search Coming Soon")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                    
+                    Text("Event search functionality will be available once the Places system is implemented")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
         }
     }
     
-    private var submitPlaceTabContent: some View {
-        SubmitPlaceView()
-            .environmentObject(networkManager)
-            .environmentObject(locationManager)
+    // MARK: - Routes Search View
+    private var routesSearchView: some View {
+        VStack {
+            if searchText.isEmpty {
+                VStack(spacing: 16) {
+                    Image(systemName: "map")
+                        .font(.system(size: 50))
+                        .foregroundColor(.gray)
+                    
+                    Text("Search for Routes")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                    
+                    Text("Find scenic motorcycle routes, popular riding paths, and custom routes")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                // Routes search results would go here
+                VStack(spacing: 16) {
+                    Image(systemName: "map.circle")
+                        .font(.system(size: 50))
+                        .foregroundColor(.orange)
+                    
+                    Text("Routes Search Coming Soon")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                    
+                    Text("Route search functionality will be expanded in future updates")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
     }
     
-    // MARK: - Helper Methods
-    
+    // MARK: - Actions
     private func performSearch() {
+        guard !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        
         isLoading = true
-        // TODO: Implement search functionality
-        // This should search both regular places/businesses AND user-submitted places
-        // It should also show if any events are happening at these locations
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            self.isLoading = false
-            // Placeholder results
-            self.searchResults = []
+        
+        // Simulate search with MapKit for now
+        let request = MKLocalSearch.Request()
+        request.naturalLanguageQuery = searchText
+        request.region = region
+        
+        let search = MKLocalSearch(request: request)
+        search.start { response, error in
+            DispatchQueue.main.async {
+                self.isLoading = false
+                
+                if let response = response {
+                    self.searchResults = response.mapItems.map { item in
+                        PlaceSearchResult(
+                            id: UUID(),
+                            name: item.name ?? "Unknown",
+                            address: item.placemark.title ?? "",
+                            coordinate: item.placemark.coordinate,
+                            category: item.pointOfInterestCategory?.rawValue ?? "Place",
+                            hasEvents: false, // Will be populated when Places system is implemented
+                            eventCount: 0
+                        )
+                    }
+                } else {
+                    self.searchResults = []
+                }
+            }
         }
     }
-    
-    private func loadPlaces() {
-        // TODO: Load user-submitted and approved places from backend
-        places = []
-    }
 }
 
-// MARK: - Supporting Views
-
-struct SearchResult: Identifiable {
-    let id = UUID()
-    let name: String
-    let address: String
-    let type: ResultType
-    let hasEvents: Bool
-    let upcomingEvents: [String]
-    
-    enum ResultType {
-        case business
-        case userPlace
-        case landmark
-    }
-}
-
-struct SearchResultRowView: View {
-    let result: SearchResult
-    let onTap: () -> Void
+// MARK: - Place Result Row
+struct PlaceResultRow: View {
+    let result: PlaceSearchResult
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack {
-                VStack(alignment: .leading) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(result.name)
                         .font(.headline)
+                        .foregroundColor(.primary)
+                    
                     Text(result.address)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
+                        .lineLimit(2)
                 }
                 
                 Spacer()
                 
-                if result.hasEvents {
-                    VStack {
-                        Image(systemName: "calendar.badge.exclamationmark")
-                            .foregroundColor(.orange)
-                        Text("Events")
-                            .font(.caption)
-                            .foregroundColor(.orange)
-                    }
-                }
-            }
-            
-            if !result.upcomingEvents.isEmpty {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Upcoming Events:")
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.orange)
-                    ForEach(result.upcomingEvents, id: \.self) { event in
-                        Text("• \(event)")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                .padding(.top, 4)
-            }
-        }
-        .padding(.vertical, 4)
-        .onTapGesture {
-            onTap()
-        }
-    }
-}
-
-struct Place: Identifiable {
-    let id = UUID()
-    let name: String
-    let description: String
-    let address: String
-    let latitude: Double
-    let longitude: Double
-    let submittedBy: String
-    let isApproved: Bool
-    let category: PlaceCategory
-    let upcomingEvents: [String]
-    
-    enum PlaceCategory: String, CaseIterable {
-        case meetupSpot = "Meetup Spot"
-        case scenic = "Scenic Route"
-        case restaurant = "Restaurant"
-        case gas = "Gas Station"
-        case garage = "Garage/Service"
-        case other = "Other"
-    }
-}
-
-struct PlaceRowView: View {
-    let place: Place
-    let onTap: () -> Void
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                VStack(alignment: .leading) {
-                    Text(place.name)
-                        .font(.headline)
-                    Text(place.category.rawValue)
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text(result.category)
                         .font(.caption)
                         .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
+                        .padding(.vertical, 4)
                         .background(Color.blue.opacity(0.2))
-                        .cornerRadius(4)
-                }
-                
-                Spacer()
-                
-                if !place.upcomingEvents.isEmpty {
-                    VStack {
-                        Image(systemName: "calendar.badge.plus")
-                            .foregroundColor(.green)
-                        Text("\(place.upcomingEvents.count)")
+                        .cornerRadius(8)
+                    
+                    if result.hasEvents {
+                        Text("\(result.eventCount) events")
                             .font(.caption)
                             .foregroundColor(.green)
                     }
                 }
             }
             
-            Text(place.description)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .lineLimit(2)
+            // Action Buttons
+            HStack(spacing: 12) {
+                Button("View Details") {
+                    // Navigate to place details
+                }
+                .font(.caption)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Color.blue.opacity(0.1))
+                .cornerRadius(6)
+                
+                Button("Get Directions") {
+                    openInMaps()
+                }
+                .font(.caption)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Color.green.opacity(0.1))
+                .cornerRadius(6)
+                
+                if result.hasEvents {
+                    Button("View Events") {
+                        // Navigate to events at this place
+                    }
+                    .font(.caption)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color.orange.opacity(0.1))
+                    .cornerRadius(6)
+                }
+                
+                Spacer()
+            }
         }
         .padding(.vertical, 4)
-        .onTapGesture {
-            onTap()
-        }
+    }
+    
+    private func openInMaps() {
+        let placemark = MKPlacemark(coordinate: result.coordinate)
+        let mapItem = MKMapItem(placemark: placemark)
+        mapItem.name = result.name
+        mapItem.openInMaps()
     }
 }
 
-struct PlaceDetailView: View {
-    let place: Place
+// MARK: - Submit Place View
+struct SubmitPlaceView: View {
+    @EnvironmentObject var networkManager: NetworkManager
+    @EnvironmentObject var locationManager: LocationManager
     @Environment(\.dismiss) private var dismiss
+    
+    @State private var placeName = ""
+    @State private var placeDescription = ""
+    @State private var placeCategory = "Meetup Spot"
+    @State private var useCurrentLocation = true
+    @State private var customAddress = ""
+    @State private var isSubmitting = false
+    
+    let categories = ["Meetup Spot", "Scenic Route", "Gas Station", "Restaurant", "Parking", "Viewpoint", "Other"]
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    // Place details
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(place.name)
-                            .font(.title)
-                            .fontWeight(.bold)
-                        
-                        Text(place.category.rawValue)
-                            .font(.subheadline)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 4)
-                            .background(Color.blue.opacity(0.2))
-                            .cornerRadius(8)
-                        
-                        Text(place.description)
-                            .font(.body)
-                        
-                        Text("Submitted by: @\(place.submittedBy)")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
+            Form {
+                Section("Place Information") {
+                    TextField("Place Name", text: $placeName)
                     
-                    // Events section
-                    if !place.upcomingEvents.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Upcoming Events")
-                                .font(.headline)
-                            
-                            ForEach(place.upcomingEvents, id: \.self) { event in
-                                HStack {
-                                    Image(systemName: "calendar")
-                                        .foregroundColor(.green)
-                                    Text(event)
-                                        .font(.subheadline)
-                                }
-                            }
+                    TextField("Description (optional)", text: $placeDescription, axis: .vertical)
+                        .lineLimit(3...6)
+                    
+                    Picker("Category", selection: $placeCategory) {
+                        ForEach(categories, id: \.self) { category in
+                            Text(category).tag(category)
                         }
                     }
-                    
-                    Spacer()
                 }
-                .padding()
+                
+                Section("Location") {
+                    Toggle("Use Current Location", isOn: $useCurrentLocation)
+                    
+                    if !useCurrentLocation {
+                        TextField("Address", text: $customAddress)
+                    }
+                }
+                
+                Section {
+                    Button("Submit Place") {
+                        submitPlace()
+                    }
+                    .disabled(placeName.isEmpty || isSubmitting)
+                    
+                    if isSubmitting {
+                        HStack {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                            Text("Submitting...")
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
             }
-            .navigationTitle("Place Details")
+            .navigationTitle("Submit Place")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
                         dismiss()
                     }
                 }
             }
         }
     }
-}
-
-struct SubmitPlaceView: View {
-    @EnvironmentObject var networkManager: NetworkManager
-    @EnvironmentObject var locationManager: LocationManager
-    @State private var name = ""
-    @State private var description = ""
-    @State private var category: Place.PlaceCategory = .meetupSpot
-    @State private var useCurrentLocation = true
-    @State private var customAddress = ""
-    @State private var isSubmitting = false
-    @State private var showingSuccess = false
-    
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Submit a New Place")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                
-                Text("Help the community by submitting cool motorcycle spots, meetup locations, or scenic routes!")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Place Name *")
-                        .font(.headline)
-                    TextField("Enter place name", text: $name)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                    
-                    Text("Description *")
-                        .font(.headline)
-                    TextField("Describe this place...", text: $description, axis: .vertical)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .lineLimit(3...6)
-                    
-                    Text("Category")
-                        .font(.headline)
-                    Picker("Category", selection: $category) {
-                        ForEach(Place.PlaceCategory.allCases, id: \.self) { category in
-                            Text(category.rawValue).tag(category)
-                        }
-                    }
-                    .pickerStyle(MenuPickerStyle())
-                    
-                    Text("Location")
-                        .font(.headline)
-                    
-                    Toggle("Use current location", isOn: $useCurrentLocation)
-                    
-                    if !useCurrentLocation {
-                        TextField("Enter address", text: $customAddress)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                    }
-                }
-                
-                Button(action: submitPlace) {
-                    HStack {
-                        if isSubmitting {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                        }
-                        Text(isSubmitting ? "Submitting..." : "Submit Place")
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(canSubmit ? Color.blue : Color.gray)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
-                }
-                .disabled(!canSubmit || isSubmitting)
-                
-                Text("Note: All submitted places are reviewed by admins before appearing on the map.")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            .padding()
-        }
-        .alert("Success!", isPresented: $showingSuccess) {
-            Button("OK") {
-                // Clear form
-                name = ""
-                description = ""
-                category = .meetupSpot
-                customAddress = ""
-            }
-        } message: {
-            Text("Your place has been submitted for review. It will appear on the map once approved by an admin.")
-        }
-    }
-    
-    private var canSubmit: Bool {
-        !name.isEmpty && !description.isEmpty && (useCurrentLocation || !customAddress.isEmpty)
-    }
     
     private func submitPlace() {
+        guard !placeName.isEmpty else { return }
+        
         isSubmitting = true
         
-        // TODO: Implement place submission to backend
+        // TODO: Implement actual API call to submit place
+        // For now, simulate submission
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             self.isSubmitting = false
-            self.showingSuccess = true
+            self.dismiss()
         }
     }
+}
+
+// MARK: - Place Search Result Model
+struct PlaceSearchResult: Identifiable {
+    let id: UUID
+    let name: String
+    let address: String
+    let coordinate: CLLocationCoordinate2D
+    let category: String
+    let hasEvents: Bool
+    let eventCount: Int
 }
 
 #Preview {
@@ -471,3 +451,5 @@ struct SubmitPlaceView: View {
         .environmentObject(NetworkManager.shared)
         .environmentObject(LocationManager.shared)
 }
+
+

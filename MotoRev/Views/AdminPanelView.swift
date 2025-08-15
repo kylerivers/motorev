@@ -161,8 +161,8 @@ struct AdminPanelView: View {
             return allUsers.filter { user in
                 user.username.localizedCaseInsensitiveContains(search) ||
                 user.email.localizedCaseInsensitiveContains(search) ||
-                (user.first_name?.localizedCaseInsensitiveContains(search) ?? false) ||
-                (user.last_name?.localizedCaseInsensitiveContains(search) ?? false)
+                (user.firstName?.localizedCaseInsensitiveContains(search) ?? false) ||
+                (user.lastName?.localizedCaseInsensitiveContains(search) ?? false)
             }
         }
     }
@@ -255,12 +255,20 @@ struct AdminPanelView: View {
         currentPage = 1
         hasMoreUsers = true
         
+        print("🔵 [AdminPanel] Starting loadAllUsers - page: \(currentPage)")
+        
         networkManager.fetchAdminUsers(search: "", page: currentPage, limit: 20) { result in
             DispatchQueue.main.async {
-                if case let .success(list) = result {
+                switch result {
+                case .success(let list):
+                    print("✅ [AdminPanel] Successfully loaded \(list.count) users")
                     self.allUsers = list
                     self.users = Array(list.prefix(20))
                     self.hasMoreUsers = list.count >= 20
+                    print("🔵 [AdminPanel] hasMoreUsers: \(self.hasMoreUsers)")
+                case .failure(let error):
+                    print("❌ [AdminPanel] Failed to load users: \(error)")
+                    self.hasMoreUsers = false
                 }
                 self.isLoading = false
             }
@@ -268,17 +276,28 @@ struct AdminPanelView: View {
     }
     
     private func loadMoreUsers() {
-        guard !isLoadingMoreUsers && hasMoreUsers else { return }
+        guard !isLoadingMoreUsers && hasMoreUsers else { 
+            print("🔶 [AdminPanel] Skipping loadMoreUsers - isLoadingMoreUsers: \(isLoadingMoreUsers), hasMoreUsers: \(hasMoreUsers)")
+            return 
+        }
         
         isLoadingMoreUsers = true
         currentPage += 1
         
+        print("🔵 [AdminPanel] Starting loadMoreUsers - page: \(currentPage)")
+        
         networkManager.fetchAdminUsers(search: "", page: currentPage, limit: 20) { result in
             DispatchQueue.main.async {
-                if case let .success(list) = result {
+                switch result {
+                case .success(let list):
+                    print("✅ [AdminPanel] Successfully loaded \(list.count) more users")
                     self.users.append(contentsOf: list)
                     self.allUsers.append(contentsOf: list)
                     self.hasMoreUsers = list.count >= 20
+                    print("🔵 [AdminPanel] hasMoreUsers: \(self.hasMoreUsers), total users: \(self.allUsers.count)")
+                case .failure(let error):
+                    print("❌ [AdminPanel] Failed to load more users: \(error)")
+                    self.hasMoreUsers = false
                 }
                 self.isLoadingMoreUsers = false
             }
@@ -430,8 +449,8 @@ struct UserDetailView: View {
                             .font(.title)
                             .fontWeight(.bold)
                         Spacer()
-                        RoleBadge(role: user.role)
-                        TierBadge(tier: user.subscriptionTier)
+                        RoleBadge(role: user.role ?? "user")
+                        TierBadge(tier: user.subscriptionTier ?? "standard")
                     }
                     
                     Text(user.email)
@@ -472,7 +491,7 @@ struct UserDetailView: View {
                             Text("Subscription Tier:")
                                 .fontWeight(.medium)
                             Spacer()
-                            Menu(user.subscriptionTier.capitalized) {
+                            Menu((user.subscriptionTier ?? "standard").capitalized) {
                                 Button("Standard") { updateTier("standard") }
                                 Button("Pro") { updateTier("pro") }
                             }
@@ -483,7 +502,7 @@ struct UserDetailView: View {
                             Text("Role:")
                                 .fontWeight(.medium)
                             Spacer()
-                            Menu(user.role.capitalized) {
+                            Menu((user.role ?? "user").capitalized) {
                                 Button("User") { updateRole("user") }
                                 Button("Admin") { updateRole("admin") }
                                 Button("Super Admin") { updateRole("super_admin") }
@@ -602,8 +621,8 @@ struct UserRowView: View {
                 Text("@\(user.username)")
                     .font(.headline)
                 Spacer()
-                RoleBadge(role: user.role)
-                TierBadge(tier: user.subscriptionTier)
+                RoleBadge(role: user.role ?? "user")
+                TierBadge(tier: user.subscriptionTier ?? "standard")
             }
             
             Text(user.email)
@@ -622,9 +641,9 @@ struct UserRowView: View {
             
             // Quick action buttons
             HStack {
-                if user.subscriptionTier == "standard" {
+                if (user.subscriptionTier ?? "standard") == "standard" {
                     Button("Grant Pro") {
-                        updateTier(user.id, "pro")
+                        updateTier(String(user.id), "pro")
                     }
                     .font(.caption)
                     .padding(.horizontal, 8)
@@ -633,9 +652,9 @@ struct UserRowView: View {
                     .cornerRadius(4)
                 }
                 
-                if user.role == "user" {
+                if (user.role ?? "user") == "user" {
                     Button("Make Admin") {
-                        updateRole(user.id, "admin")
+                        updateRole(String(user.id), "admin")
                     }
                     .font(.caption)
                     .padding(.horizontal, 8)

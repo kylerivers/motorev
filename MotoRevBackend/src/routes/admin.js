@@ -17,15 +17,27 @@ const allowedTables = [
 // Users management
 router.get('/users', async (req, res) => {
   try {
-    const { search = '', limit = 50, offset = 0 } = req.query;
+    const { search = '', page = 1, limit = 50 } = req.query;
+    const offset = (parseInt(page) - 1) * parseInt(limit);
     const like = `%${search}%`;
+    
     const rows = await query(`
-      SELECT id, username, email, first_name, last_name, role, is_premium, subscription_tier, status, created_at
+      SELECT 
+        id, username, email, first_name, last_name, phone, bio,
+        motorcycle_make, motorcycle_model, motorcycle_year, 
+        profile_picture, riding_experience, role, subscription_tier, is_premium,
+        total_rides, total_miles, total_ride_time, safety_score,
+        status, location_sharing_enabled, is_verified,
+        created_at, updated_at,
+        (SELECT COUNT(*) FROM posts WHERE user_id = users.id) as posts_count,
+        (SELECT COUNT(*) FROM followers WHERE followed_id = users.id) as followers_count,
+        (SELECT COUNT(*) FROM followers WHERE follower_id = users.id) as following_count
       FROM users
       WHERE username LIKE ? OR email LIKE ? OR first_name LIKE ? OR last_name LIKE ?
       ORDER BY created_at DESC
       LIMIT ? OFFSET ?
-    `, [like, like, like, like, parseInt(limit), parseInt(offset)]);
+    `, [like, like, like, like, parseInt(limit), offset]);
+    
     res.json({ users: rows });
   } catch (e) {
     console.error('List users error:', e);
@@ -286,6 +298,29 @@ router.get('/stats', async (req, res) => {
     res.json(stats);
   } catch (error) {
     console.error('Get stats error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Upgrade Kyle Rivers to Pro account (one-time setup)
+router.post('/setup-kyle-pro', async (req, res) => {
+  try {
+    const result = await run(`
+      UPDATE users 
+      SET subscription_tier = 'pro', is_premium = 1, role = 'super_admin', updated_at = NOW() 
+      WHERE username = 'kylerivers'
+    `);
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'User kylerivers not found' });
+    }
+    
+    res.json({ 
+      message: 'Kyle Rivers upgraded to Pro with Super Admin privileges',
+      affectedRows: result.affectedRows
+    });
+  } catch (error) {
+    console.error('Setup Kyle Pro error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

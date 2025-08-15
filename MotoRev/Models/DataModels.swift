@@ -46,7 +46,7 @@ struct User: Identifiable, Codable {
 }
 
 // MARK: - Backend User Model
-struct BackendUser: Codable {
+struct BackendUser: Codable, Identifiable {
     let id: Int
     let username: String
     let email: String

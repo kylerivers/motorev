@@ -78,6 +78,8 @@
 		3B0000010000GR02 /* GroupRideBrowseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000GR01 /* GroupRideBrowseView.swift */; };
 		3B0000010000GV02 /* GroupVoiceChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000GV01 /* GroupVoiceChatView.swift */; };
 		3B0000010000RE02 /* RideEventsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000RE01 /* RideEventsView.swift */; };
+		3B0000010000GC01 /* GroupCommunicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000GC02 /* GroupCommunicationView.swift */; };
+		3B0000010000SP01 /* SearchPlacesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0000010000SP02 /* SearchPlacesView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -154,6 +156,8 @@
 		3B0000010000GR01 /* GroupRideBrowseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupRideBrowseView.swift; sourceTree = "<group>"; };
 		3B0000010000GV01 /* GroupVoiceChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupVoiceChatView.swift; sourceTree = "<group>"; };
 		3B0000010000RE01 /* RideEventsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideEventsView.swift; sourceTree = "<group>"; };
+		3B0000010000GC02 /* GroupCommunicationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupCommunicationView.swift; sourceTree = "<group>"; };
+		3B0000010000SP02 /* SearchPlacesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchPlacesView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -271,6 +275,8 @@
 				,3B0000010000GR01 /* GroupRideBrowseView.swift */
 				,3B0000010000GV01 /* GroupVoiceChatView.swift */
 				,3B0000010000RE01 /* RideEventsView.swift */
+				,3B0000010000GC02 /* GroupCommunicationView.swift */
+				,3B0000010000SP02 /* SearchPlacesView.swift */
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -411,6 +417,8 @@
 				3B0000010000GR02 /* GroupRideBrowseView.swift in Sources */,
 				3B0000010000GV02 /* GroupVoiceChatView.swift in Sources */,
 				3B0000010000RE02 /* RideEventsView.swift in Sources */,
+				3B0000010000GC01 /* GroupCommunicationView.swift in Sources */,
+				3B0000010000SP01 /* SearchPlacesView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

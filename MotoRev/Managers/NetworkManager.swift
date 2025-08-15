@@ -468,7 +468,7 @@ class NetworkManager: ObservableObject {
     }
     
     // MARK: - Admin APIs
-    func fetchAdminUsers(search: String, page: Int = 1, limit: Int = 50, completion: @escaping (Result<[AdminUser], Error>) -> Void) {
+        func fetchAdminUsers(search: String, page: Int = 1, limit: Int = 50, completion: @escaping (Result<[AdminUser], Error>) -> Void) {
         struct AdminUsersResponse: Codable { let users: [AdminUser] }
         var components = URLComponents(string: "\(baseURL)/admin/users")!
         components.queryItems = [
@@ -476,12 +476,23 @@ class NetworkManager: ObservableObject {
             URLQueryItem(name: "page", value: String(page)),
             URLQueryItem(name: "limit", value: String(limit))
         ]
-        guard let url = components.url else { completion(.failure(URLError(.badURL))); return }
-        
+        guard let url = components.url else { 
+            print("❌ [NetworkManager] Invalid URL for admin users")
+            completion(.failure(URLError(.badURL)))
+            return 
+        }
+
+        print("🔵 [NetworkManager] Fetching admin users: \(url)")
+        print("🔵 [NetworkManager] Auth token exists: \(authToken != nil)")
+
         makeAuthenticatedRequest(url: url, method: "GET", body: EmptyBody())
             .sink(receiveCompletion: { comp in
-                if case let .failure(err) = comp { completion(.failure(err)) }
+                if case let .failure(err) = comp { 
+                    print("❌ [NetworkManager] Admin users request failed: \(err)")
+                    completion(.failure(err)) 
+                }
             }, receiveValue: { (resp: AdminUsersResponse) in
+                print("✅ [NetworkManager] Admin users response: \(resp.users.count) users")
                 completion(.success(resp.users))
             })
             .store(in: &cancellables)
