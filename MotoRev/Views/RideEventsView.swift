@@ -272,6 +272,14 @@ struct RideEventsView: View {
         isLoading = true
         errorMessage = nil
         
+        // Check if user is authenticated first
+        guard networkManager.isLoggedIn && networkManager.authToken != nil else {
+            self.errorMessage = "Please sign in to view events."
+            self.isLoading = false
+            print("🔑 User not authenticated, cannot load events")
+            return
+        }
+        
         // Use NetworkManager to fetch events from backend
         networkManager.getEvents()
             .sink(receiveCompletion: { completion in
@@ -287,12 +295,16 @@ struct RideEventsView: View {
                             self.isShowingSampleData = true
                             self.errorMessage = nil
                             print("🔶 Events API unavailable, showing sample data")
-                        } else if message.contains("No authentication token") {
+                        } else if message.contains("No authentication token") || message.contains("Access token required") || message.contains("unauthorized") {
                             self.errorMessage = "Please sign in to view events."
+                            print("🔑 Authentication required for events API")
+                        } else if message.contains("The Internet connection appears to be offline") || message.contains("network connection lost") {
+                            self.errorMessage = "Please check your internet connection."
+                            print("🌐 Network connectivity issue")
                         } else {
-                            self.errorMessage = "Failed to load events: \(message)"
+                            self.errorMessage = "Failed to load events. Please try again."
+                            print("🔴 Events loading error: \(error)")
                         }
-                        print("🔴 Events loading error: \(error)")
                         self.isLoading = false
                     }
                 }
