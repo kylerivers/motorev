@@ -78,15 +78,17 @@ struct RideHubView: View {
                     }
                     // Music & Voice Chat placeholders
                     HStack(spacing: 8) {
-                        NavigationLink(destination: SharedMusicView()
+                        NavigationLink(destination: GroupCommunicationView()
                             .environmentObject(NowPlayingManager.shared)
+                            .environmentObject(WebRTCManager.shared)
                             .environmentObject(GroupRideManager.shared)
+                            .environmentObject(NetworkManager.shared)
                         ) {
                             VStack(spacing: 4) {
-                                Image(systemName: "music.note.list")
+                                Image(systemName: "headphones.circle")
                                     .font(.title2)
                                     .foregroundColor(.blue)
-                                Text("Music")
+                                Text("Communicate")
                                     .font(.caption)
                                     .fontWeight(.semibold)
                                     .foregroundColor(.primary)
@@ -97,23 +99,22 @@ struct RideHubView: View {
                             .cornerRadius(12)
                         }
                         
-                        NavigationLink(destination: GroupVoiceChatView()
-                            .environmentObject(WebRTCManager.shared)
-                            .environmentObject(GroupRideManager.shared)
+                        NavigationLink(destination: SearchPlacesView()
                             .environmentObject(NetworkManager.shared)
+                            .environmentObject(LocationManager.shared)
                         ) {
                             VStack(spacing: 4) {
-                                Image(systemName: "waveform")
+                                Image(systemName: "magnifyingglass.circle")
                                     .font(.title2)
-                                    .foregroundColor(.green)
-                                Text("Voice")
+                                    .foregroundColor(.orange)
+                                Text("Search")
                                     .font(.caption)
                                     .fontWeight(.semibold)
                                     .foregroundColor(.primary)
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
-                            .background(Color.green.opacity(0.1))
+                            .background(Color.orange.opacity(0.1))
                             .cornerRadius(12)
                         }
                         

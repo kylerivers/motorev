@@ -468,9 +468,16 @@ class NetworkManager: ObservableObject {
     }
     
     // MARK: - Admin APIs
-    func fetchAdminUsers(search: String, completion: @escaping (Result<[AdminUser], Error>) -> Void) {
+    func fetchAdminUsers(search: String, page: Int = 1, limit: Int = 50, completion: @escaping (Result<[AdminUser], Error>) -> Void) {
         struct AdminUsersResponse: Codable { let users: [AdminUser] }
-        guard let url = URL(string: "\(baseURL)/admin/users?search=\(search.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")") else { completion(.failure(URLError(.badURL))); return }
+        var components = URLComponents(string: "\(baseURL)/admin/users")!
+        components.queryItems = [
+            URLQueryItem(name: "search", value: search),
+            URLQueryItem(name: "page", value: String(page)),
+            URLQueryItem(name: "limit", value: String(limit))
+        ]
+        guard let url = components.url else { completion(.failure(URLError(.badURL))); return }
+        
         makeAuthenticatedRequest(url: url, method: "GET", body: EmptyBody())
             .sink(receiveCompletion: { comp in
                 if case let .failure(err) = comp { completion(.failure(err)) }

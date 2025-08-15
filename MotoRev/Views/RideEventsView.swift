@@ -24,7 +24,6 @@ struct RideEventsView: View {
     enum EventsTab: String, CaseIterable {
         case events = "Events"
         case rides = "Rides"
-        case routes = "Routes"
     }
     
     enum RouteTab: String, CaseIterable {
@@ -66,9 +65,6 @@ struct RideEventsView: View {
                     
                     ridesTabContent
                         .tag(EventsTab.rides)
-                    
-                    routesTabContent
-                        .tag(EventsTab.routes)
                 }
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
                 
@@ -80,8 +76,6 @@ struct RideEventsView: View {
                     Button(action: { 
                         if selectedTab == .events {
                             showingCreateEvent = true
-                        } else if selectedTab == .routes {
-                            // TODO: Add route creation based on sub-tab
                         }
                     }) {
                         Image(systemName: selectedTab == .events ? "plus" : "location.magnifyingglass")

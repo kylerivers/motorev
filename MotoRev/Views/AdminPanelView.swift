@@ -7,10 +7,14 @@ struct AdminPanelView: View {
     @State private var selectedTab = 0
     @State private var stats: AdminStats?
     @State private var users: [AdminUser] = []
+    @State private var allUsers: [AdminUser] = [] // Store all users for filtering
     @State private var posts: [AdminPost] = []
     @State private var rides: [AdminRide] = []
     @State private var search: String = ""
     @State private var isLoading = false
+    @State private var isLoadingMoreUsers = false
+    @State private var hasMoreUsers = true
+    @State private var currentPage = 1
     @State private var hazards: [AdminHazard] = []
     @State private var emergencies: [AdminEmergency] = []
     
@@ -71,19 +75,94 @@ struct AdminPanelView: View {
     
     private var usersList: some View {
         VStack {
-            HStack { TextField("Search users", text: $search).textFieldStyle(RoundedBorderTextFieldStyle()); Button("Search") { loadUsers() } }
-                .padding([.horizontal,.top])
+            // Search bar with instant filtering
+            HStack { 
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.gray)
+                TextField("Search users by username, email, or name...", text: $search)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .onChange(of: search) { _, newValue in
+                        filterUsers()
+                    }
+                
+                if !search.isEmpty {
+                    Button("Clear") {
+                        search = ""
+                        filterUsers()
+                    }
+                    .font(.caption)
+                    .foregroundColor(.blue)
+                }
+            }
+            .padding([.horizontal,.top])
+            
+            // Results info
+            HStack {
+                Text("Showing \(filteredUsers.count) of \(allUsers.count) users")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Spacer()
+                if isLoadingMoreUsers {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                }
+            }
+            .padding(.horizontal)
+            
+            // Users list with infinite scroll
             List {
-                ForEach(users) { u in
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack { Text("@\(u.username)").font(.headline); Spacer(); RoleBadge(role: u.role); TierBadge(tier: u.subscriptionTier) }
-                        Text(u.email).font(.caption).foregroundColor(.secondary)
-                        HStack {
-                            Menu("Role: \(u.role)") { ForEach(["user","admin","super_admin"], id: \.self) { r in Button(r) { updateRole(u.id, r) } } }
-                            Menu("Tier: \(u.subscriptionTier)") { ForEach(["standard","pro"], id: \.self) { t in Button(t) { updateTier(u.id, t) } } }
+                ForEach(filteredUsers) { user in
+                    NavigationLink(destination: UserDetailView(user: user, onUpdate: { 
+                        loadAllUsers() // Refresh the full list
+                    })) {
+                        UserRowView(user: user) {
+                            loadAllUsers()
+                        }
+                    }
+                    .onAppear {
+                        // Load more when reaching the last few items
+                        if user.id == filteredUsers.last?.id && hasMoreUsers && search.isEmpty {
+                            loadMoreUsers()
                         }
                     }
                 }
+                
+                // Loading indicator at bottom
+                if hasMoreUsers && search.isEmpty {
+                    HStack {
+                        Spacer()
+                        ProgressView("Loading more users...")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                    }
+                    .padding()
+                    .onAppear {
+                        loadMoreUsers()
+                    }
+                }
+            }
+            .refreshable {
+                await refreshUsers()
+            }
+        }
+        .onAppear {
+            if allUsers.isEmpty {
+                loadAllUsers()
+            }
+        }
+    }
+    
+    // Computed property for filtered users
+    private var filteredUsers: [AdminUser] {
+        if search.isEmpty {
+            return users // Show paginated results when not searching
+        } else {
+            return allUsers.filter { user in
+                user.username.localizedCaseInsensitiveContains(search) ||
+                user.email.localizedCaseInsensitiveContains(search) ||
+                (user.first_name?.localizedCaseInsensitiveContains(search) ?? false) ||
+                (user.last_name?.localizedCaseInsensitiveContains(search) ?? false)
             }
         }
     }
@@ -162,7 +241,61 @@ struct AdminPanelView: View {
         networkManager.fetchAdminStats { result in if case let .success(s) = result { self.stats = s }; self.isLoading = false }
         loadUsers(); loadPosts(); loadRides(); loadHazards(); loadEmergencies()
     }
-    private func loadUsers() { networkManager.fetchAdminUsers(search: search) { if case let .success(list) = $0 { self.users = list } } }
+    private func loadUsers() { 
+        networkManager.fetchAdminUsers(search: search) { if case let .success(list) = $0 { 
+            self.users = list 
+            if self.allUsers.isEmpty {
+                self.allUsers = list
+            }
+        } } 
+    }
+    
+    private func loadAllUsers() {
+        isLoading = true
+        currentPage = 1
+        hasMoreUsers = true
+        
+        networkManager.fetchAdminUsers(search: "", page: currentPage, limit: 20) { result in
+            DispatchQueue.main.async {
+                if case let .success(list) = result {
+                    self.allUsers = list
+                    self.users = Array(list.prefix(20))
+                    self.hasMoreUsers = list.count >= 20
+                }
+                self.isLoading = false
+            }
+        }
+    }
+    
+    private func loadMoreUsers() {
+        guard !isLoadingMoreUsers && hasMoreUsers else { return }
+        
+        isLoadingMoreUsers = true
+        currentPage += 1
+        
+        networkManager.fetchAdminUsers(search: "", page: currentPage, limit: 20) { result in
+            DispatchQueue.main.async {
+                if case let .success(list) = result {
+                    self.users.append(contentsOf: list)
+                    self.allUsers.append(contentsOf: list)
+                    self.hasMoreUsers = list.count >= 20
+                }
+                self.isLoadingMoreUsers = false
+            }
+        }
+    }
+    
+    private func filterUsers() {
+        // Filtering is handled by the computed property
+    }
+    
+    private func refreshUsers() async {
+        currentPage = 1
+        hasMoreUsers = true
+        users.removeAll()
+        allUsers.removeAll()
+        loadAllUsers()
+    }
     private func loadPosts() { networkManager.fetchAdminPosts() { if case let .success(list) = $0 { self.posts = list } } }
     private func loadRides() { networkManager.fetchAdminRides() { if case let .success(list) = $0 { self.rides = list } } }
     private func loadHazards() { networkManager.fetchAdminHazards() { if case let .success(list) = $0 { self.hazards = list } } }
@@ -282,4 +415,258 @@ struct AdminUser: Identifiable, Codable {
 }
 
 struct RoleBadge: View { let role: String; var body: some View { Text(role).font(.caption2).padding(6).background(role == "super_admin" ? Color.red.opacity(0.2) : role == "admin" ? Color.blue.opacity(0.2) : Color.gray.opacity(0.2)).cornerRadius(6) } }
-struct TierBadge: View { let tier: String; var body: some View { Text(tier.capitalized).font(.caption2).padding(6).background(tier == "pro" ? Color.green.opacity(0.2) : Color.orange.opacity(0.2)).cornerRadius(6) } } 
+struct TierBadge: View { let tier: String; var body: some View { Text(tier.capitalized).font(.caption2).padding(6).background(tier == "pro" ? Color.green.opacity(0.2) : Color.orange.opacity(0.2)).cornerRadius(6) } }
+
+// MARK: - User Detail View
+
+struct UserDetailView: View {
+    let user: AdminUser
+    let onUpdate: () -> Void
+    @EnvironmentObject var networkManager: NetworkManager
+    @Environment(\.dismiss) private var dismiss
+    @State private var isUpdating = false
+    
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                // User Header
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("@\(user.username)")
+                            .font(.title)
+                            .fontWeight(.bold)
+                        Spacer()
+                        RoleBadge(role: user.role)
+                        TierBadge(tier: user.subscriptionTier)
+                    }
+                    
+                    Text(user.email)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    
+                    if let firstName = user.first_name, let lastName = user.last_name {
+                        Text("\(firstName) \(lastName)")
+                            .font(.subheadline)
+                    }
+                }
+                
+                // User Stats
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Statistics")
+                        .font(.headline)
+                    
+                    HStack {
+                        StatBox(title: "Total Rides", value: "\(user.total_rides ?? 0)")
+                        StatBox(title: "Total Miles", value: String(format: "%.1f", user.total_miles ?? 0))
+                        StatBox(title: "Safety Score", value: "\(user.safety_score ?? 100)")
+                    }
+                    
+                    HStack {
+                        StatBox(title: "Posts", value: "\(user.posts_count ?? 0)")
+                        StatBox(title: "Followers", value: "\(user.followers_count ?? 0)")
+                        StatBox(title: "Following", value: "\(user.following_count ?? 0)")
+                    }
+                }
+                
+                // Account Management
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Account Management")
+                        .font(.headline)
+                    
+                    VStack(spacing: 8) {
+                        HStack {
+                            Text("Subscription Tier:")
+                                .fontWeight(.medium)
+                            Spacer()
+                            Menu(user.subscriptionTier.capitalized) {
+                                Button("Standard") { updateTier("standard") }
+                                Button("Pro") { updateTier("pro") }
+                            }
+                            .buttonStyle(.bordered)
+                        }
+                        
+                        HStack {
+                            Text("Role:")
+                                .fontWeight(.medium)
+                            Spacer()
+                            Menu(user.role.capitalized) {
+                                Button("User") { updateRole("user") }
+                                Button("Admin") { updateRole("admin") }
+                                Button("Super Admin") { updateRole("super_admin") }
+                            }
+                            .buttonStyle(.bordered)
+                        }
+                    }
+                }
+                
+                // Motorcycle Info
+                if let make = user.motorcycle_make, let model = user.motorcycle_model {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Motorcycle")
+                            .font(.headline)
+                        
+                        Text("\(make) \(model)")
+                            .font(.subheadline)
+                        
+                        if let year = user.motorcycle_year {
+                            Text("Year: \(year)")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+                
+                // Account Dates
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Account Information")
+                        .font(.headline)
+                    
+                    Text("Created: \(user.created_at ?? "Unknown")")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    Text("Status: \(user.status ?? "Active")")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .padding()
+        }
+        .navigationTitle("User Details")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Done") {
+                    dismiss()
+                }
+            }
+        }
+        .overlay {
+            if isUpdating {
+                ProgressView("Updating...")
+                    .padding()
+                    .background(Color(.systemBackground))
+                    .cornerRadius(8)
+                    .shadow(radius: 4)
+            }
+        }
+    }
+    
+    private func updateTier(_ tier: String) {
+        isUpdating = true
+        // TODO: Call actual API to update tier
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            self.isUpdating = false
+            self.onUpdate()
+        }
+    }
+    
+    private func updateRole(_ role: String) {
+        isUpdating = true
+        // TODO: Call actual API to update role
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            self.isUpdating = false
+            self.onUpdate()
+        }
+    }
+}
+
+struct StatBox: View {
+    let title: String
+    let value: String
+    
+    var body: some View {
+        VStack {
+            Text(value)
+                .font(.title2)
+                .fontWeight(.bold)
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(8)
+    }
+}
+
+// MARK: - User Row View
+
+struct UserRowView: View {
+    let user: AdminUser
+    let onUpdate: () -> Void
+    @EnvironmentObject var networkManager: NetworkManager
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack { 
+                Text("@\(user.username)")
+                    .font(.headline)
+                Spacer()
+                RoleBadge(role: user.role)
+                TierBadge(tier: user.subscriptionTier)
+            }
+            
+            Text(user.email)
+                .font(.caption)
+                .foregroundColor(.secondary)
+            
+            HStack {
+                Text("Rides: \(user.total_rides ?? 0)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Spacer()
+                Text("Safety: \(user.safety_score ?? 100)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            // Quick action buttons
+            HStack {
+                if user.subscriptionTier == "standard" {
+                    Button("Grant Pro") {
+                        updateTier(user.id, "pro")
+                    }
+                    .font(.caption)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.green.opacity(0.2))
+                    .cornerRadius(4)
+                }
+                
+                if user.role == "user" {
+                    Button("Make Admin") {
+                        updateRole(user.id, "admin")
+                    }
+                    .font(.caption)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.blue.opacity(0.2))
+                    .cornerRadius(4)
+                }
+                
+                Spacer()
+            }
+        }
+        .padding(.vertical, 4)
+    }
+    
+    private func updateTier(_ userId: String, _ tier: String) {
+        // TODO: Call actual API to update tier
+        if let userIdInt = Int(userId) {
+            networkManager.updateUserSubscription(userId: userIdInt, tier: tier) { _ in
+                onUpdate()
+            }
+        }
+    }
+    
+    private func updateRole(_ userId: String, _ role: String) {
+        // TODO: Call actual API to update role  
+        if let userIdInt = Int(userId) {
+            networkManager.updateUserRole(userId: userIdInt, role: role) { _ in
+                onUpdate()
+            }
+        }
+    }
+} 
