@@ -405,75 +405,8 @@ struct MiniBarChart: View {
     }
 }
 
-struct AdminUser: Identifiable, Codable {
-    let id: String
-    let username: String
-    let email: String
-    let role: String
-    let subscriptionTier: String
-    let isPremium: Bool?
-    
-    // User details
-    let first_name: String?
-    let last_name: String?
-    let status: String?
-    let created_at: String?
-    
-    // Motorcycle info
-    let motorcycle_make: String?
-    let motorcycle_model: String?
-    let motorcycle_year: String?
-    
-    // Statistics
-    let total_rides: Int?
-    let total_miles: Double?
-    let safety_score: Int?
-    let posts_count: Int?
-    let followers_count: Int?
-    let following_count: Int?
-    
-    // CodingKeys to handle different ID types
-    enum CodingKeys: String, CodingKey {
-        case id, username, email, role, subscriptionTier, isPremium
-        case first_name, last_name, status, created_at
-        case motorcycle_make, motorcycle_model, motorcycle_year
-        case total_rides, total_miles, safety_score
-        case posts_count, followers_count, following_count
-    }
-    
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        username = try container.decode(String.self, forKey: .username)
-        email = try container.decode(String.self, forKey: .email)
-        role = try container.decode(String.self, forKey: .role)
-        subscriptionTier = try container.decode(String.self, forKey: .subscriptionTier)
-        isPremium = try container.decodeIfPresent(Bool.self, forKey: .isPremium)
-        
-        // Handle ID that could be Int or String from backend
-        if let intId = try? container.decode(Int.self, forKey: .id) {
-            id = String(intId)
-        } else {
-            id = try container.decode(String.self, forKey: .id)
-        }
-        
-        // Optional fields
-        first_name = try container.decodeIfPresent(String.self, forKey: .first_name)
-        last_name = try container.decodeIfPresent(String.self, forKey: .last_name)
-        status = try container.decodeIfPresent(String.self, forKey: .status)
-        created_at = try container.decodeIfPresent(String.self, forKey: .created_at)
-        
-        motorcycle_make = try container.decodeIfPresent(String.self, forKey: .motorcycle_make)
-        motorcycle_model = try container.decodeIfPresent(String.self, forKey: .motorcycle_model)
-        motorcycle_year = try container.decodeIfPresent(String.self, forKey: .motorcycle_year)
-        
-        total_rides = try container.decodeIfPresent(Int.self, forKey: .total_rides)
-        total_miles = try container.decodeIfPresent(Double.self, forKey: .total_miles)
-        safety_score = try container.decodeIfPresent(Int.self, forKey: .safety_score)
-        posts_count = try container.decodeIfPresent(Int.self, forKey: .posts_count)
-        followers_count = try container.decodeIfPresent(Int.self, forKey: .followers_count)
-        following_count = try container.decodeIfPresent(Int.self, forKey: .following_count)
-    }
-}
+// Use BackendUser directly for admin panel
+typealias AdminUser = BackendUser
 
 struct RoleBadge: View { let role: String; var body: some View { Text(role).font(.caption2).padding(6).background(role == "super_admin" ? Color.red.opacity(0.2) : role == "admin" ? Color.blue.opacity(0.2) : Color.gray.opacity(0.2)).cornerRadius(6) } }
 struct TierBadge: View { let tier: String; var body: some View { Text(tier.capitalized).font(.caption2).padding(6).background(tier == "pro" ? Color.green.opacity(0.2) : Color.orange.opacity(0.2)).cornerRadius(6) } }
@@ -505,7 +438,7 @@ struct UserDetailView: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     
-                    if let firstName = user.first_name, let lastName = user.last_name {
+                    if let firstName = user.firstName, let lastName = user.lastName {
                         Text("\(firstName) \(lastName)")
                             .font(.subheadline)
                     }
@@ -517,15 +450,15 @@ struct UserDetailView: View {
                         .font(.headline)
                     
                     HStack {
-                        StatBox(title: "Total Rides", value: "\(user.total_rides ?? 0)")
-                        StatBox(title: "Total Miles", value: String(format: "%.1f", user.total_miles ?? 0))
-                        StatBox(title: "Safety Score", value: "\(user.safety_score ?? 100)")
+                        StatBox(title: "Total Rides", value: "\(user.totalRides ?? 0)")
+                        StatBox(title: "Total Miles", value: String(format: "%.1f", user.totalMiles ?? 0))
+                        StatBox(title: "Safety Score", value: "\(user.safetyScore ?? 100)")
                     }
                     
                     HStack {
-                        StatBox(title: "Posts", value: "\(user.posts_count ?? 0)")
-                        StatBox(title: "Followers", value: "\(user.followers_count ?? 0)")
-                        StatBox(title: "Following", value: "\(user.following_count ?? 0)")
+                        StatBox(title: "Posts", value: "\(user.postsCount ?? 0)")
+                        StatBox(title: "Followers", value: "\(user.followersCount ?? 0)")
+                        StatBox(title: "Following", value: "\(user.followingCount ?? 0)")
                     }
                 }
                 
@@ -561,7 +494,7 @@ struct UserDetailView: View {
                 }
                 
                 // Motorcycle Info
-                if let make = user.motorcycle_make, let model = user.motorcycle_model {
+                if let make = user.motorcycleMake, let model = user.motorcycleModel {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Motorcycle")
                             .font(.headline)
@@ -569,7 +502,7 @@ struct UserDetailView: View {
                         Text("\(make) \(model)")
                             .font(.subheadline)
                         
-                        if let year = user.motorcycle_year {
+                        if let year = user.motorcycleYear {
                             Text("Year: \(year)")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
@@ -582,7 +515,11 @@ struct UserDetailView: View {
                     Text("Account Information")
                         .font(.headline)
                     
-                    Text("Created: \(user.created_at ?? "Unknown")")
+                    Text("Created: \(user.createdAt)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    Text("Updated: \(user.updatedAt)")
                         .font(.caption)
                         .foregroundColor(.secondary)
                     
@@ -674,11 +611,11 @@ struct UserRowView: View {
                 .foregroundColor(.secondary)
             
             HStack {
-                Text("Rides: \(user.total_rides ?? 0)")
+                Text("Rides: \(user.totalRides ?? 0)")
                     .font(.caption)
                     .foregroundColor(.secondary)
                 Spacer()
-                Text("Safety: \(user.safety_score ?? 100)")
+                Text("Safety: \(user.safetyScore ?? 100)")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
