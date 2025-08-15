@@ -8,6 +8,18 @@ router.get('/', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
         
+        // Check if ride_events table exists first
+        try {
+            await query('SELECT 1 FROM ride_events LIMIT 1');
+            console.log('✅ ride_events table exists and is accessible');
+        } catch (tableError) {
+            console.error('❌ ride_events table error:', tableError.message);
+            return res.status(500).json({ 
+                error: 'Database table not found', 
+                details: 'ride_events table does not exist or is not accessible'
+            });
+        }
+        
         // Get public events and user's private events
         const events = await query(`
             SELECT e.*, u.username as organizer_username,
@@ -21,10 +33,11 @@ router.get('/', authenticateToken, async (req, res) => {
             ORDER BY e.start_time ASC
         `, [userId, userId, userId]);
         
+        console.log(`✅ Found ${events.length} events for user ${userId}`);
         res.json({ events });
     } catch (error) {
         console.error('Error fetching events:', error);
-        res.status(500).json({ error: 'Failed to fetch events' });
+        res.status(500).json({ error: 'Failed to fetch events', details: error.message });
     }
 });
 
