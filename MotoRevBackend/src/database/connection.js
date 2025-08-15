@@ -97,10 +97,16 @@ const run = async (sql, params = []) => {
 const executeMultiple = async (sql) => {
   const connection = await pool.getConnection();
   try {
-    const statements = sql.split(';').filter(stmt => stmt.trim().length > 0);
+    const statements = sql.split(';').filter(stmt => {
+      const trimmed = stmt.trim();
+      // Filter out empty statements and comments-only statements
+      return trimmed.length > 0 && !trimmed.startsWith('--') && !trimmed.match(/^\/\*.*\*\/$/s);
+    });
+    
     for (const statement of statements) {
-      if (statement.trim()) {
-        await connection.execute(statement);
+      const trimmed = statement.trim();
+      if (trimmed && !trimmed.startsWith('--')) {
+        await connection.execute(trimmed);
       }
     }
   } finally {
