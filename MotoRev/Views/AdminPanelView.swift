@@ -406,12 +406,73 @@ struct MiniBarChart: View {
 }
 
 struct AdminUser: Identifiable, Codable {
-    let id: Int
+    let id: String
     let username: String
     let email: String
     let role: String
     let subscriptionTier: String
     let isPremium: Bool?
+    
+    // User details
+    let first_name: String?
+    let last_name: String?
+    let status: String?
+    let created_at: String?
+    
+    // Motorcycle info
+    let motorcycle_make: String?
+    let motorcycle_model: String?
+    let motorcycle_year: String?
+    
+    // Statistics
+    let total_rides: Int?
+    let total_miles: Double?
+    let safety_score: Int?
+    let posts_count: Int?
+    let followers_count: Int?
+    let following_count: Int?
+    
+    // CodingKeys to handle different ID types
+    enum CodingKeys: String, CodingKey {
+        case id, username, email, role, subscriptionTier, isPremium
+        case first_name, last_name, status, created_at
+        case motorcycle_make, motorcycle_model, motorcycle_year
+        case total_rides, total_miles, safety_score
+        case posts_count, followers_count, following_count
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        username = try container.decode(String.self, forKey: .username)
+        email = try container.decode(String.self, forKey: .email)
+        role = try container.decode(String.self, forKey: .role)
+        subscriptionTier = try container.decode(String.self, forKey: .subscriptionTier)
+        isPremium = try container.decodeIfPresent(Bool.self, forKey: .isPremium)
+        
+        // Handle ID that could be Int or String from backend
+        if let intId = try? container.decode(Int.self, forKey: .id) {
+            id = String(intId)
+        } else {
+            id = try container.decode(String.self, forKey: .id)
+        }
+        
+        // Optional fields
+        first_name = try container.decodeIfPresent(String.self, forKey: .first_name)
+        last_name = try container.decodeIfPresent(String.self, forKey: .last_name)
+        status = try container.decodeIfPresent(String.self, forKey: .status)
+        created_at = try container.decodeIfPresent(String.self, forKey: .created_at)
+        
+        motorcycle_make = try container.decodeIfPresent(String.self, forKey: .motorcycle_make)
+        motorcycle_model = try container.decodeIfPresent(String.self, forKey: .motorcycle_model)
+        motorcycle_year = try container.decodeIfPresent(String.self, forKey: .motorcycle_year)
+        
+        total_rides = try container.decodeIfPresent(Int.self, forKey: .total_rides)
+        total_miles = try container.decodeIfPresent(Double.self, forKey: .total_miles)
+        safety_score = try container.decodeIfPresent(Int.self, forKey: .safety_score)
+        posts_count = try container.decodeIfPresent(Int.self, forKey: .posts_count)
+        followers_count = try container.decodeIfPresent(Int.self, forKey: .followers_count)
+        following_count = try container.decodeIfPresent(Int.self, forKey: .following_count)
+    }
 }
 
 struct RoleBadge: View { let role: String; var body: some View { Text(role).font(.caption2).padding(6).background(role == "super_admin" ? Color.red.opacity(0.2) : role == "admin" ? Color.blue.opacity(0.2) : Color.gray.opacity(0.2)).cornerRadius(6) } }
