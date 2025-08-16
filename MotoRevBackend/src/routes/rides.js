@@ -207,4 +207,74 @@ router.delete('/completed/:rideId', authenticateToken, async (req, res) => {
     }
 });
 
+// Test endpoint to add sample ride data (for development)
+router.post('/test-data', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        
+        const sampleRides = [
+            {
+                id: `test-ride-${Date.now()}-1`,
+                ride_type: 'Solo',
+                start_time: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+                end_time: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 45 * 60 * 1000), // 45 min ride
+                duration: 2700, // 45 minutes in seconds
+                distance: 25000, // 25 km in meters
+                average_speed: 35, // mph
+                max_speed: 65, // mph
+                route_data: JSON.stringify([]),
+                safety_score: 95
+            },
+            {
+                id: `test-ride-${Date.now()}-2`,
+                ride_type: 'Group',
+                start_time: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+                end_time: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000 + 90 * 60 * 1000), // 90 min ride
+                duration: 5400, // 90 minutes in seconds  
+                distance: 75000, // 75 km in meters
+                average_speed: 45, // mph
+                max_speed: 80, // mph
+                route_data: JSON.stringify([]),
+                safety_score: 88
+            },
+            {
+                id: `test-ride-${Date.now()}-3`,
+                ride_type: 'Commute',
+                start_time: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+                end_time: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 20 * 60 * 1000), // 20 min ride
+                duration: 1200, // 20 minutes in seconds
+                distance: 12000, // 12 km in meters
+                average_speed: 30, // mph
+                max_speed: 45, // mph
+                route_data: JSON.stringify([]),
+                safety_score: 92
+            }
+        ];
+
+        for (const ride of sampleRides) {
+            await query(`
+                INSERT INTO completed_rides (
+                    id, user_id, ride_type, start_time, end_time, duration,
+                    distance, average_speed, max_speed, route_data, safety_score, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                ON DUPLICATE KEY UPDATE id = id
+            `, [
+                ride.id, userId, ride.ride_type, ride.start_time, ride.end_time, 
+                ride.duration, ride.distance, ride.average_speed, ride.max_speed, 
+                ride.route_data, ride.safety_score
+            ]);
+        }
+
+        res.json({ 
+            success: true, 
+            message: `Added ${sampleRides.length} sample rides for testing`,
+            rides: sampleRides.length
+        });
+
+    } catch (error) {
+        console.error('Error adding test ride data:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 module.exports = router;
