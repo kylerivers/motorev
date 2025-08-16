@@ -104,6 +104,95 @@ app.get('/test-deploy', (req, res) => {
   });
 });
 
+// Simple database browser
+app.get('/db-browser', async (req, res) => {
+  try {
+    const { query } = require('./src/database/connection');
+    const { table, sql } = req.query;
+    
+    let result = {};
+    
+    if (sql) {
+      // Execute custom SQL
+      result.query = sql;
+      result.data = await query(sql);
+    } else if (table) {
+      // Show table data
+      result.table = table;
+      result.data = await query(`SELECT * FROM ${table} LIMIT 100`);
+    } else {
+      // Show all tables
+      const tables = await query('SHOW TABLES');
+      result.tables = tables.map(t => Object.values(t)[0]);
+    }
+    
+    // Return HTML page
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>MotoRev Database Browser</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #f2f2f2; }
+          .form-group { margin: 10px 0; }
+          input, textarea, select { padding: 5px; margin: 5px; }
+          button { padding: 10px 20px; background: #007cba; color: white; border: none; cursor: pointer; }
+          .tables { display: flex; flex-wrap: wrap; gap: 10px; }
+          .table-link { padding: 10px; background: #f0f0f0; text-decoration: none; color: #333; border-radius: 5px; }
+        </style>
+      </head>
+      <body>
+        <h1>🗄️ MotoRev Database Browser</h1>
+        
+        <div class="form-group">
+          <h3>Quick Table Access:</h3>
+          <div class="tables">
+            ${result.tables ? result.tables.map(t => 
+              `<a href="/db-browser?table=${t}" class="table-link">${t}</a>`
+            ).join('') : ''}
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <h3>Custom SQL Query:</h3>
+          <form method="get">
+            <textarea name="sql" placeholder="SELECT * FROM places;" style="width: 100%; height: 100px;">${sql || ''}</textarea><br>
+            <button type="submit">Execute Query</button>
+          </form>
+        </div>
+        
+        ${result.data ? `
+          <h3>Results${result.table ? ` for table: ${result.table}` : ''}:</h3>
+          <p>Rows: ${result.data.length}</p>
+          ${result.data.length > 0 ? `
+            <table>
+              <tr>${Object.keys(result.data[0]).map(k => `<th>${k}</th>`).join('')}</tr>
+              ${result.data.map(row => 
+                `<tr>${Object.values(row).map(v => `<td>${v || 'NULL'}</td>`).join('')}</tr>`
+              ).join('')}
+            </table>
+          ` : '<p>No data found</p>'}
+        ` : ''}
+        
+        <div style="margin-top: 40px; padding: 20px; background: #f9f9f9;">
+          <h3>🔧 Quick Actions:</h3>
+          <a href="/db-browser?table=places">View Places Table</a> | 
+          <a href="/db-browser?table=users">View Users Table</a> | 
+          <a href="/db-browser?sql=SHOW%20TABLES">Show All Tables</a> | 
+          <a href="/db-browser?sql=SELECT%20*%20FROM%20places%20ORDER%20BY%20created_at%20DESC%20LIMIT%2010">Recent Places</a>
+        </div>
+      </body>
+      </html>
+    `);
+    
+  } catch (error) {
+    res.status(500).send(`<h1>Database Error</h1><p>${error.message}</p>`);
+  }
+});
+
 
 
 
