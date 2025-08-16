@@ -226,6 +226,11 @@ router.post('/test-data', authenticateToken, async (req, res) => {
         
         const userId = req.user.id;
         
+        // FIRST: Delete any existing rides with invalid ride types
+        console.log('🗑️ Cleaning up invalid ride types...');
+        await query(`DELETE FROM completed_rides WHERE ride_type NOT IN ('Solo', 'Group', 'Joined', 'None')`);
+        console.log('✅ Cleaned up invalid ride types');
+        
         const sampleRides = [
             {
                 id: `test-ride-${Date.now()}-1`,
