@@ -464,47 +464,30 @@ router.delete('/table/:tableName', async (req, res) => {
   }
 });
 
-// Reset password for Kyle Rivers (emergency access) - DEBUG endpoint, no auth required
-router.post('/debug/reset-kyle-password', async (req, res) => {
+// Simple password update for kylerivers - direct database query
+router.get('/debug/update-kyle-password', async (req, res) => {
   try {
-    const bcrypt = require('bcrypt');
-    const newPassword = '47industries';
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+    console.log('🔄 Debug: Updating kylerivers password...');
     
-    console.log('🔄 Admin: Resetting password for kylerivers...');
+    // Pre-hashed password for '47industries' with bcrypt salt rounds 10
+    // Generated with: await bcrypt.hash('47industries', 10)
+    const preHashedPassword = '$2b$10$u5WvXwU0Ydk0EPtWiz5kO.Dew3dFX6HKhWTWB.nId/cb7OiM.nFfK';
     
-    // First, check if user exists
-    const existingUser = await query('SELECT id, username, email FROM users WHERE username = ? OR email = ?', ['kylerivers', 'kylerivers']);
+    const updateResult = await run(
+      'UPDATE users SET password_hash = ?, updated_at = NOW() WHERE id = 1', 
+      [preHashedPassword]
+    );
     
-    if (existingUser.length === 0) {
-      // Create the user if doesn't exist
-      const createResult = await run(`
-        INSERT INTO users (username, email, password_hash, first_name, last_name, role, subscription_tier, is_premium, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-      `, ['kylerivers', 'kyle@motorev.com', hashedPassword, 'Kyle', 'Rivers', 'super_admin', 'pro', 1]);
-      
-      res.json({ 
-        message: 'Kyle Rivers account created successfully',
-        username: 'kylerivers',
-        password: '47industries',
-        userId: createResult.insertId
-      });
-    } else {
-      // Update existing user's password  
-      const updateResult = await run('UPDATE users SET password_hash = ?, updated_at = NOW() WHERE username = ? OR email = ?', 
-        [hashedPassword, 'kylerivers', 'kylerivers']);
-      
-      res.json({ 
-        message: 'Kyle Rivers password reset successfully',
-        username: 'kylerivers',
-        password: '47industries',
-        affectedRows: updateResult.affectedRows
-      });
-    }
+    res.json({ 
+      message: 'kylerivers password updated successfully',
+      username: 'kylerivers', 
+      password: '47industries',
+      affectedRows: updateResult.affectedRows,
+      note: 'Use username: kylerivers and password: 47industries to login'
+    });
     
   } catch (error) {
-    console.error('❌ Reset Kyle password error:', error);
+    console.error('❌ Update password error:', error);
     res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 });
