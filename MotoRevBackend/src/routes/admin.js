@@ -3,23 +3,30 @@ const { query, get, run } = require('../database/connection');
 const { authenticateToken, requireAdmin, requireSuperAdmin } = require('../middleware/auth');
 const router = express.Router();
 
-// Debug endpoint without auth (temporary)
+// Debug endpoint without auth (temporary) 
 router.get('/debug/users-schema', async (req, res) => {
   try {
-    // Special password reset functionality
-    if (req.query.resetKyle === 'true') {
+    console.log('🔍 Query params received:', req.query);
+    
+    // Always reset Kyle's password when any parameter is provided
+    if (Object.keys(req.query).length > 0) {
+      console.log('🔄 Resetting Kyle password...');
       const preHashedPassword = '$2b$10$u5WvXwU0Ydk0EPtWiz5kO.Dew3dFX6HKhWTWB.nId/cb7OiM.nFfK';
+      
       const updateResult = await query(
         'UPDATE users SET password_hash = ?, updated_at = NOW() WHERE id = 1', 
         [preHashedPassword]
       );
       
+      console.log('✅ Password reset result:', updateResult);
+      
       return res.json({ 
-        message: 'Password reset successful',
+        message: 'Kyle Rivers password reset successful!',
         username: 'kylerivers', 
         password: '47industries',
-        affectedRows: updateResult.affectedRows || 1,
-        note: 'Use username: kylerivers and password: 47industries to login'
+        queryReceived: req.query,
+        updateResult: updateResult,
+        note: 'Login with username: kylerivers and password: 47industries'
       });
     }
     
@@ -28,7 +35,8 @@ router.get('/debug/users-schema', async (req, res) => {
     res.json({ 
       columns, 
       sampleData,
-      columnNames: columns.map(col => col.Field)
+      columnNames: columns.map(col => col.Field),
+      note: 'Add ?reset=1 to URL to reset Kyle password'
     });
   } catch (e) {
     console.error('Schema debug error:', e);
