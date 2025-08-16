@@ -6,40 +6,29 @@ const router = express.Router();
 // Debug endpoint without auth (temporary) 
 router.get('/debug/users-schema', async (req, res) => {
   try {
-    console.log('🔍 Query params received:', req.query);
-    
-    // Always reset Kyle's password when any parameter is provided
-    if (Object.keys(req.query).length > 0) {
-      console.log('🔄 Resetting Kyle password...');
-      const preHashedPassword = '$2b$10$u5WvXwU0Ydk0EPtWiz5kO.Dew3dFX6HKhWTWB.nId/cb7OiM.nFfK';
-      
-      const updateResult = await query(
-        'UPDATE users SET password_hash = ?, updated_at = NOW() WHERE id = 1', 
-        [preHashedPassword]
-      );
-      
-      console.log('✅ Password reset result:', updateResult);
-      
-      return res.json({ 
-        message: 'Kyle Rivers password reset successful!',
-        username: 'kylerivers', 
-        password: '47industries',
-        queryReceived: req.query,
-        updateResult: updateResult,
-        note: 'Login with username: kylerivers and password: 47industries'
-      });
-    }
-    
     const columns = await query('DESCRIBE users');
     const sampleData = await query('SELECT * FROM users LIMIT 1');
     res.json({ 
       columns, 
       sampleData,
-      columnNames: columns.map(col => col.Field),
-      note: 'Add ?reset=1 to URL to reset Kyle password'
+      columnNames: columns.map(col => col.Field)
     });
   } catch (e) {
     console.error('Schema debug error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Debug endpoint to check tables
+router.get('/debug/tables', async (req, res) => {
+  try {
+    const tables = await query('SHOW TABLES');
+    res.json({ 
+      message: 'Database tables',
+      tables: tables.map(t => Object.values(t)[0])
+    });
+  } catch (e) {
+    console.error('Tables debug error:', e);
     res.status(500).json({ error: e.message });
   }
 });
