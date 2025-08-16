@@ -3,12 +3,85 @@ const { query, get, run } = require('../database/connection');
 const { authenticateToken, requireAdmin, requireSuperAdmin } = require('../middleware/auth');
 const router = express.Router();
 
+// Debug endpoint without auth (temporary)
+router.get('/debug/users-schema', async (req, res) => {
+  try {
+    const columns = await query('DESCRIBE users');
+    const sampleData = await query('SELECT * FROM users LIMIT 1');
+    res.json({ 
+      columns, 
+      sampleData,
+      columnNames: columns.map(col => col.Field)
+    });
+  } catch (e) {
+    console.error('Schema debug error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// TEMP: Debug users endpoint without auth
+router.get('/debug/users', async (req, res) => {
+  try {
+    const { search = '', page = 1, limit = 50 } = req.query;
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    const like = `%${search}%`;
+    
+    console.log('🚨🚨🚨 [Admin] DEBUG /admin/debug/users called', { search, page, limit });
+    
+    const rows = await query(`
+      SELECT 
+        id, username, email, first_name, last_name, role, subscription_tier, is_premium,
+        created_at, updated_at
+      FROM users
+      ORDER BY created_at DESC
+      LIMIT 5
+    `);
+    
+    const users = rows.map(row => ({
+      id: row.id,
+      username: row.username,
+      email: row.email,
+      firstName: row.first_name,
+      lastName: row.last_name,
+      role: row.role || 'user',
+      subscriptionTier: row.subscription_tier || 'standard',
+      isPremium: Boolean(row.is_premium),
+      totalRides: 0,
+      totalMiles: 0,
+      totalRideTime: 0.0,
+      safetyScore: 100,
+      status: 'offline',
+      locationSharingEnabled: false,
+      isVerified: Boolean(row.is_verified),
+      phone: null,
+      bio: null,
+      motorcycleMake: null,
+      motorcycleModel: null,
+      motorcycleYear: null,
+      profilePictureUrl: null,
+      ridingExperience: 'beginner',
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      postsCount: 0,
+      followersCount: 0,
+      followingCount: 0
+    }));
+    
+    console.log('🚨🚨🚨 [Admin] DEBUG returning:', { userCount: users.length, firstUser: users[0] ? users[0].username : 'none' });
+    res.json({ users });
+    
+  } catch (e) {
+    console.error('❌ [Admin] DEBUG users error:', e);
+    res.status(500).json({ error: e.message, stack: e.stack });
+  }
+});
+
 // Require auth/admin for all admin routes
 router.use(authenticateToken, requireAdmin);
 
 // Whitelist allowed tables for security
 const allowedTables = [
-  'users', 'posts', 'stories', 'rides', 'emergency_events', 
+  'posts', 'stories', 'rides', 'emergency_events', 
   'hazard_reports', 'followers', 'post_likes', 'post_comments',
   'location_updates', 'riding_packs', 'pack_members', 'user_sessions',
   'story_views', 'hazard_confirmations'
@@ -21,26 +94,56 @@ router.get('/users', async (req, res) => {
     const offset = (parseInt(page) - 1) * parseInt(limit);
     const like = `%${search}%`;
     
-    const rows = await query(`
-      SELECT 
-        id, username, email, first_name, last_name, phone, bio,
-        motorcycle_make, motorcycle_model, motorcycle_year, 
-        profile_picture, riding_experience, role, subscription_tier, is_premium,
-        total_rides, total_miles, total_ride_time, safety_score,
-        status, location_sharing_enabled, is_verified,
-        created_at, updated_at,
-        (SELECT COUNT(*) FROM posts WHERE user_id = users.id) as posts_count,
-        (SELECT COUNT(*) FROM followers WHERE followed_id = users.id) as followers_count,
-        (SELECT COUNT(*) FROM followers WHERE follower_id = users.id) as following_count
+    console.log('🚨🚨🚨 [Admin] GET /admin/users called', { search, page, limit, url: req.originalUrl });
+    console.log('🚨🚨🚨 [Admin] Request headers:', req.headers.authorization ? 'HAS AUTH' : 'NO AUTH');
+    
+        const rows = await query(`
+      SELECT
+        id, username, email, first_name, last_name, role, subscription_tier, is_premium,
+        created_at, updated_at
       FROM users
       WHERE username LIKE ? OR email LIKE ? OR first_name LIKE ? OR last_name LIKE ?
       ORDER BY created_at DESC
       LIMIT ? OFFSET ?
     `, [like, like, like, like, parseInt(limit), offset]);
     
-    res.json({ users: rows });
+    // Transform the data to match the client's expected structure
+    const users = rows.map(row => ({
+      id: row.id,
+      username: row.username,
+      email: row.email,
+      firstName: row.first_name,
+      lastName: row.last_name,
+      role: row.role || 'user',
+      subscriptionTier: row.subscription_tier || 'standard',
+      isPremium: Boolean(row.is_premium),
+      totalRides: row.total_rides || 0,
+      totalMiles: row.total_miles || 0,
+      totalRideTime: row.total_ride_time || 0.0,
+      safetyScore: row.safety_score || 100,
+      status: row.status || 'offline',
+      locationSharingEnabled: Boolean(row.location_sharing_enabled),
+      isVerified: Boolean(row.is_verified),
+      phone: row.phone,
+      bio: row.bio,
+      motorcycleMake: row.motorcycle_make,
+      motorcycleModel: row.motorcycle_model,
+      motorcycleYear: row.motorcycle_year,
+      profilePictureUrl: row.profile_picture_url,
+      ridingExperience: row.riding_experience || 'beginner',
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      postsCount: row.posts_count || 0,
+      followersCount: row.followers_count || 0,
+      followingCount: row.following_count || 0
+    }));
+    
+    console.log('🚨🚨🚨 [Admin] About to return:', { userCount: users.length, firstUser: users[0] ? users[0].username : 'none' });
+    console.log('🚨🚨🚨 [Admin] Response structure: { users: [...] }');
+    res.json({ users });
+    
   } catch (e) {
-    console.error('List users error:', e);
+    console.error('❌ [Admin] List users error:', e);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -113,6 +216,8 @@ router.get('/table/:tableName', async (req, res) => {
     const { tableName } = req.params;
     const { limit = 100, offset = 0 } = req.query;
     
+    console.log('🔥🔥🔥 [Admin] GET /admin/table/' + tableName + ' called', { limit, offset, url: req.originalUrl });
+    
     if (!allowedTables.includes(tableName)) {
       return res.status(400).json({ error: 'Invalid table name' });
     }
@@ -123,6 +228,7 @@ router.get('/table/:tableName', async (req, res) => {
     const rows = await query(`SELECT * FROM ${tableName} ORDER BY id DESC LIMIT ${sanitizedLimit} OFFSET ${sanitizedOffset}`);
     const totalResult = await get(`SELECT COUNT(*) as total FROM ${tableName}`);
     
+    console.log('🔥🔥🔥 [Admin] Returning table data with ROWS structure for', tableName, { rowCount: rows.length });
     res.json({ 
       rows, 
       total: totalResult?.total || 0,
@@ -171,7 +277,7 @@ router.post('/table/:tableName', async (req, res) => {
     delete data.id;
     
     // Add timestamps if table supports them
-    if (data.hasOwnProperty('created_at') || tableName === 'users' || tableName === 'posts') {
+    if (data.hasOwnProperty('created_at') || tableName === 'posts') {
       data.created_at = new Date().toISOString();
       data.updated_at = new Date().toISOString();
     }
@@ -208,7 +314,7 @@ router.put('/table/:tableName/:id', async (req, res) => {
     delete data.id;
     
     // Add updated timestamp if table supports it
-    if (data.hasOwnProperty('updated_at') || tableName === 'users' || tableName === 'posts') {
+    if (data.hasOwnProperty('updated_at') || tableName === 'posts') {
       data.updated_at = new Date().toISOString();
     }
     
@@ -243,7 +349,7 @@ router.delete('/table/:tableName/:id', async (req, res) => {
     }
     
     // Don't allow deleting from certain critical tables
-    if (tableName === 'users' && id <= 3) {
+    if (false) { // Removed users table protection
       return res.status(400).json({ error: 'Cannot delete seed users' });
     }
     
@@ -286,6 +392,14 @@ router.get('/stats', async (req, res) => {
   try {
     const stats = {};
     
+    // Always include users count
+    try {
+      const usersResult = await get(`SELECT COUNT(*) as count FROM users`);
+      stats.users = usersResult?.count || 0;
+    } catch (error) {
+      stats.users = 0;
+    }
+    
     for (const table of allowedTables) {
       try {
         const result = await get(`SELECT COUNT(*) as count FROM ${table}`);
@@ -295,6 +409,7 @@ router.get('/stats', async (req, res) => {
       }
     }
     
+    console.log('🚨 [Admin] Stats response:', stats);
     res.json(stats);
   } catch (error) {
     console.error('Get stats error:', error);

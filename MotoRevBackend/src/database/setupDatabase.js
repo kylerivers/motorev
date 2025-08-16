@@ -176,7 +176,13 @@ async function ensureAdditionalColumns() {
   const userStatsColumns = [
     { name: 'total_rides', ddl: 'ALTER TABLE users ADD COLUMN total_rides INT DEFAULT 0' },
     { name: 'total_miles', ddl: 'ALTER TABLE users ADD COLUMN total_miles FLOAT DEFAULT 0.0' },
-    { name: 'total_ride_time', ddl: 'ALTER TABLE users ADD COLUMN total_ride_time FLOAT DEFAULT 0.0' }
+    { name: 'total_ride_time', ddl: 'ALTER TABLE users ADD COLUMN total_ride_time FLOAT DEFAULT 0.0' },
+    { name: 'profile_picture', ddl: 'ALTER TABLE users ADD COLUMN profile_picture VARCHAR(255) DEFAULT NULL' },
+    { name: 'riding_experience', ddl: 'ALTER TABLE users ADD COLUMN riding_experience VARCHAR(50) DEFAULT NULL' },
+    { name: 'safety_score', ddl: 'ALTER TABLE users ADD COLUMN safety_score FLOAT DEFAULT 0.0' },
+    { name: 'status', ddl: 'ALTER TABLE users ADD COLUMN status VARCHAR(50) DEFAULT "active"' },
+    { name: 'location_sharing_enabled', ddl: 'ALTER TABLE users ADD COLUMN location_sharing_enabled BOOLEAN DEFAULT TRUE' },
+    { name: 'is_verified', ddl: 'ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT FALSE' }
   ];
   
   for (const column of userStatsColumns) {
