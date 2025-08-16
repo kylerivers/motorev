@@ -125,110 +125,55 @@ app.get('/debug-tables', async (req, res) => {
   }
 });
 
-// Create missing places tables
-app.get('/setup-places-tables', async (req, res) => {
+// Create basic places table only
+app.get('/create-places-table', async (req, res) => {
   try {
     const { query } = require('./src/database/connection');
     
-    console.log('🔧 Creating places tables...');
+    console.log('🔧 Creating places table...');
     
-    // Create places table (without foreign keys first)
+    // Just create the basic places table without foreign keys
     await query(`
       CREATE TABLE IF NOT EXISTS places (
         id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         submitted_by BIGINT UNSIGNED NOT NULL,
         name VARCHAR(255) NOT NULL,
         description TEXT,
-        category ENUM('restaurant', 'gas_station', 'scenic_viewpoint', 'motorcycle_shop', 'lodging', 'parking', 'other') NOT NULL,
+        category VARCHAR(50) NOT NULL,
         latitude DECIMAL(10, 8) NOT NULL,
         longitude DECIMAL(11, 8) NOT NULL,
         address TEXT,
         phone VARCHAR(20),
         website VARCHAR(255),
         hours_of_operation TEXT,
-        amenities JSON,
-        images JSON,
+        amenities TEXT,
+        images TEXT,
         rating DECIMAL(3, 2) DEFAULT 0.0,
         review_count INT DEFAULT 0,
-        status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+        status VARCHAR(20) DEFAULT 'pending',
         approval_notes TEXT,
         approved_by BIGINT UNSIGNED NULL,
         approved_at TIMESTAMP NULL,
         featured BOOLEAN DEFAULT FALSE,
-        tags JSON,
+        tags TEXT,
         submission_notes TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_category (category),
-        INDEX idx_status (status),
-        INDEX idx_location (latitude, longitude),
-        INDEX idx_featured (featured),
-        INDEX idx_rating (rating)
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
     
-    // Create place_favorites table
-    await query(`
-      CREATE TABLE IF NOT EXISTS place_favorites (
-        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        user_id BIGINT UNSIGNED NOT NULL,
-        place_id BIGINT UNSIGNED NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE KEY unique_favorite (user_id, place_id),
-        INDEX idx_user_favorites (user_id),
-        INDEX idx_place_favorites (place_id)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    `);
-    
-    // Create place_reviews table
-    await query(`
-      CREATE TABLE IF NOT EXISTS place_reviews (
-        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        place_id BIGINT UNSIGNED NOT NULL,
-        user_id BIGINT UNSIGNED NOT NULL,
-        rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
-        review_text TEXT,
-        images JSON,
-        helpful_count INT DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        UNIQUE KEY unique_review (place_id, user_id),
-        INDEX idx_place_reviews (place_id),
-        INDEX idx_user_reviews (user_id),
-        INDEX idx_rating (rating)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    `);
-    
-    // Create place_checkins table
-    await query(`
-      CREATE TABLE IF NOT EXISTS place_checkins (
-        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        place_id BIGINT UNSIGNED NOT NULL,
-        user_id BIGINT UNSIGNED NOT NULL,
-        latitude DECIMAL(10, 8) NOT NULL,
-        longitude DECIMAL(11, 8) NOT NULL,
-        notes TEXT,
-        photos JSON,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_place_checkins (place_id),
-        INDEX idx_user_checkins (user_id),
-        INDEX idx_checkin_location (latitude, longitude)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    `);
-    
-    console.log('✅ Places tables created successfully!');
+    console.log('✅ Places table created successfully!');
     
     res.json({ 
-      message: '🎉 Places tables created successfully!',
-      tables: ['places', 'place_favorites', 'place_reviews', 'place_checkins'],
+      message: '🎉 Places table created successfully!',
       timestamp: new Date().toISOString(),
-      note: 'Places feature should now work!'
+      note: 'Places submission should now work!'
     });
     
   } catch (error) {
-    console.error('❌ Setup places tables error:', error);
+    console.error('❌ Create places table error:', error);
     res.status(500).json({ 
-      error: 'Failed to create places tables', 
+      error: 'Failed to create places table', 
       details: error.message,
       timestamp: new Date().toISOString()
     });

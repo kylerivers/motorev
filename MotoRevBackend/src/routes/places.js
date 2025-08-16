@@ -196,8 +196,10 @@ router.post('/', authenticateToken, async (req, res) => {
         const result = await query(insertQuery, [
             userId, name, description, category, latitude, longitude,
             address, phone, website, hours_of_operation,
-            JSON.stringify(amenities), JSON.stringify(images),
-            JSON.stringify(tags), submission_notes
+            Array.isArray(amenities) ? amenities.join(',') : (amenities || ''),
+            Array.isArray(images) ? images.join(',') : (images || ''),
+            Array.isArray(tags) ? tags.join(',') : (tags || ''), 
+            submission_notes
         ]);
         
         res.status(201).json({
