@@ -480,7 +480,7 @@ router.post('/debug/reset-kyle-password', async (req, res) => {
     if (existingUser.length === 0) {
       // Create the user if doesn't exist
       const createResult = await run(`
-        INSERT INTO users (username, email, password, first_name, last_name, role, subscription_tier, is_premium, created_at, updated_at)
+        INSERT INTO users (username, email, password_hash, first_name, last_name, role, subscription_tier, is_premium, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
       `, ['kylerivers', 'kyle@motorev.com', hashedPassword, 'Kyle', 'Rivers', 'super_admin', 'pro', 1]);
       
@@ -491,8 +491,8 @@ router.post('/debug/reset-kyle-password', async (req, res) => {
         userId: createResult.insertId
       });
     } else {
-      // Update existing user's password
-      const updateResult = await run('UPDATE users SET password = ?, updated_at = NOW() WHERE username = ? OR email = ?', 
+      // Update existing user's password  
+      const updateResult = await run('UPDATE users SET password_hash = ?, updated_at = NOW() WHERE username = ? OR email = ?', 
         [hashedPassword, 'kylerivers', 'kylerivers']);
       
       res.json({ 
