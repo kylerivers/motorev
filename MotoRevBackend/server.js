@@ -104,6 +104,27 @@ app.get('/test-deploy', (req, res) => {
   });
 });
 
+// Debug endpoint to check database tables
+app.get('/debug-tables', async (req, res) => {
+  try {
+    const { query } = require('./src/database/connection');
+    const tables = await query('SHOW TABLES');
+    
+    res.json({ 
+      message: 'Database tables in production',
+      tables: tables.map(t => Object.values(t)[0]),
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ Tables debug error:', error);
+    res.status(500).json({ 
+      error: 'Failed to get tables', 
+      details: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 
 // Root OK endpoint (some platforms probe '/')
 app.get('/', (req, res) => {
