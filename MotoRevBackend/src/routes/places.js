@@ -13,13 +13,12 @@ router.get('/', async (req, res) => {
             SELECT 
                 p.*,
                 u.username as submitted_by_username,
-                ${userId ? 'CASE WHEN pf.id IS NOT NULL THEN true ELSE false END as is_favorited,' : ''}
+                false as is_favorited,
                 (6371 * acos(cos(radians(?)) * cos(radians(p.latitude)) * 
                 cos(radians(p.longitude) - radians(?)) + sin(radians(?)) * 
                 sin(radians(p.latitude)))) AS distance_km
             FROM places p
             JOIN users u ON p.submitted_by = u.id
-            ${userId ? 'LEFT JOIN place_favorites pf ON p.id = pf.place_id AND pf.user_id = ?' : ''}
             WHERE p.status = 'approved'
         `;
         
@@ -28,11 +27,9 @@ router.get('/', async (req, res) => {
         // Add distance calculation parameters if location provided
         if (lat && lng) {
             params.push(parseFloat(lat), parseFloat(lng), parseFloat(lat));
-            if (userId) params.push(userId);
         } else {
             // Dummy values for distance calculation when no location provided
             params.push(0, 0, 0);
-            if (userId) params.push(userId);
         }
         
         // Add filters
