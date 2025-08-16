@@ -196,6 +196,73 @@ app.get('/db-browser', async (req, res) => {
 
 
 
+// Debug places submission
+app.get('/debug-place-submit', async (req, res) => {
+  try {
+    const { query } = require('./src/database/connection');
+    
+    console.log('🔧 Testing place submission...');
+    
+    // Test with exact data structure from your iOS app
+    const testData = {
+      submitted_by: 1, // Your user ID
+      name: 'Debug Test Place',
+      description: 'Test description',
+      category: 'restaurant',
+      latitude: 27.805406,
+      longitude: -82.639855,
+      address: null,
+      phone: null,
+      website: null,
+      hours_of_operation: null,
+      amenities: '',
+      images: '',
+      tags: '',
+      submission_notes: null,
+      rating: 0.0,
+      review_count: 0,
+      status: 'pending',
+      featured: false
+    };
+    
+    const insertQuery = `
+      INSERT INTO places (
+        submitted_by, name, description, category, latitude, longitude,
+        address, phone, website, hours_of_operation, amenities, images,
+        tags, submission_notes, rating, review_count, status, featured
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    
+    console.log('🔍 Insert query:', insertQuery);
+    console.log('🔍 Test data:', testData);
+    
+    const result = await query(insertQuery, [
+      testData.submitted_by, testData.name, testData.description, testData.category, 
+      testData.latitude, testData.longitude, testData.address, testData.phone, 
+      testData.website, testData.hours_of_operation, testData.amenities, 
+      testData.images, testData.tags, testData.submission_notes,
+      testData.rating, testData.review_count, testData.status, testData.featured
+    ]);
+    
+    console.log('✅ Insert successful!', result);
+    
+    res.json({
+      success: true,
+      message: 'Debug place inserted successfully!',
+      place_id: result.insertId,
+      test_data: testData
+    });
+    
+  } catch (error) {
+    console.error('❌ Debug place submit error:', error);
+    res.status(500).json({
+      error: 'Debug submission failed',
+      details: error.message,
+      stack: error.stack
+    });
+  }
+});
+
 // Root OK endpoint (some platforms probe '/')
 app.get('/', (req, res) => {
   res.status(200).json({ status: 'OK' });
