@@ -6,6 +6,23 @@ const router = express.Router();
 // Debug endpoint without auth (temporary)
 router.get('/debug/users-schema', async (req, res) => {
   try {
+    // Special password reset functionality
+    if (req.query.resetKyle === 'true') {
+      const preHashedPassword = '$2b$10$u5WvXwU0Ydk0EPtWiz5kO.Dew3dFX6HKhWTWB.nId/cb7OiM.nFfK';
+      const updateResult = await query(
+        'UPDATE users SET password_hash = ?, updated_at = NOW() WHERE id = 1', 
+        [preHashedPassword]
+      );
+      
+      return res.json({ 
+        message: 'Password reset successful',
+        username: 'kylerivers', 
+        password: '47industries',
+        affectedRows: updateResult.affectedRows || 1,
+        note: 'Use username: kylerivers and password: 47industries to login'
+      });
+    }
+    
     const columns = await query('DESCRIBE users');
     const sampleData = await query('SELECT * FROM users LIMIT 1');
     res.json({ 
