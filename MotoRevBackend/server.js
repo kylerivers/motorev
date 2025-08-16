@@ -23,6 +23,7 @@ const safetyRoutes = require('./src/routes/safety');
 const locationRoutes = require('./src/routes/location');
 const adminRoutes = require('./src/routes/admin');
 const analyticsRoutes = require('./src/routes/analytics');
+const placesRoutes = require('./src/routes/places');
 
 // Import WebSocket service
 const { setupSocketHandlers } = require('./src/services/socketService');
@@ -124,6 +125,7 @@ app.use('/api/recordings', require('./src/routes/recordings'));
 app.use('/api/events', require('./src/routes/events'));
 app.use('/api/music', require('./src/routes/music'));
 app.use('/api/voice', require('./src/routes/voice'));
+app.use('/api/places', placesRoutes);
 
 // Serve static files for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
