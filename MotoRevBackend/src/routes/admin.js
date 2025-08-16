@@ -97,28 +97,15 @@ router.get('/users', async (req, res) => {
     console.log('🚨🚨🚨 [Admin] GET /admin/users called', { search, page, limit, url: req.originalUrl });
     console.log('🚨🚨🚨 [Admin] Request headers:', req.headers.authorization ? 'HAS AUTH' : 'NO AUTH');
     
-        // Handle search with proper NULL checks for name fields
-    let searchQuery = '';
-    let searchParams = [];
-    
-    if (search && search.trim() !== '') {
-      searchQuery = `
-        WHERE username LIKE ? OR email LIKE ? 
-           OR (first_name IS NOT NULL AND first_name LIKE ?) 
-           OR (last_name IS NOT NULL AND last_name LIKE ?)
-      `;
-      searchParams = [like, like, like, like];
-    }
-    
+        // Use simple query without prepared statement parameters for now
     const rows = await query(`
       SELECT
         id, username, email, first_name, last_name, role, subscription_tier, is_premium,
         created_at, updated_at
       FROM users
-      ${searchQuery}
       ORDER BY created_at DESC
-      LIMIT ? OFFSET ?
-    `, [...searchParams, parseInt(limit), offset]);
+      LIMIT ${parseInt(limit)} OFFSET ${offset}
+    `);
     
     // Transform the data to match the client's expected structure
     const users = rows.map(row => ({
