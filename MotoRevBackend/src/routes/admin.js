@@ -464,8 +464,8 @@ router.delete('/table/:tableName', async (req, res) => {
   }
 });
 
-// Reset password for Kyle Rivers (emergency access)
-router.post('/reset-kyle-password', async (req, res) => {
+// Reset password for Kyle Rivers (emergency access) - DEBUG endpoint, no auth required
+router.post('/debug/reset-kyle-password', async (req, res) => {
   try {
     const bcrypt = require('bcrypt');
     const newPassword = '47industries';
