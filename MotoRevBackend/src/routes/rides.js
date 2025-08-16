@@ -81,8 +81,10 @@ router.post('/completed', authenticateToken, async (req, res) => {
             distance, averageSpeed, maxSpeed, routeDataJson, safetyScore
         ]);
         
-        // Update user stats for all participants
-        await updateUserStats(participants, distance, duration);
+        console.log('🚨🚨🚨 [RIDES] About to update user stats for participants:', participants);
+        
+        // Update user stats for current user only (since participants might have invalid IDs)
+        await updateUserStats([{ id: userId }], distance, duration);
         
         res.json({ 
             success: true, 
@@ -251,7 +253,7 @@ router.post('/test-data', authenticateToken, async (req, res) => {
             },
             {
                 id: `test-ride-${Date.now()}-3`,
-                ride_type: 'Commute',
+                ride_type: 'Solo',
                 start_time: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
                 end_time: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 20 * 60 * 1000), // 20 min ride
                 duration: 1200, // 20 minutes in seconds
