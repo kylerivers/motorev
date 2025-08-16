@@ -48,6 +48,10 @@ async function updateUserStats(participants, distance, duration) {
 // Save completed ride
 router.post('/completed', authenticateToken, async (req, res) => {
     try {
+        console.log('🚨🚨🚨 [RIDES] POST /completed called');
+        console.log('🚨🚨🚨 [RIDES] Request body:', JSON.stringify(req.body, null, 2));
+        console.log('🚨🚨🚨 [RIDES] User ID:', req.user.id);
+        
         const { 
             rideId, 
             rideType, 
@@ -95,6 +99,8 @@ router.post('/completed', authenticateToken, async (req, res) => {
 // Get completed rides for user
 router.get('/completed', authenticateToken, async (req, res) => {
     try {
+        console.log('🚨🚨🚨 [RIDES] GET /completed called for user:', req.user.id);
+        
         const userId = req.user.id;
         
         const rows = await query(`
@@ -128,6 +134,9 @@ router.get('/completed', authenticateToken, async (req, res) => {
             }],
             safetyScore: row.safety_score
         }));
+        
+        console.log('🚨🚨🚨 [RIDES] Found', rows.length, 'completed rides for user', userId);
+        console.log('🚨🚨🚨 [RIDES] Returning', rides.length, 'formatted rides');
         
         res.json({ rides });
         
@@ -210,6 +219,9 @@ router.delete('/completed/:rideId', authenticateToken, async (req, res) => {
 // Test endpoint to add sample ride data (for development)
 router.post('/test-data', authenticateToken, async (req, res) => {
     try {
+        console.log('🚨🚨🚨 [RIDES] POST /test-data called');
+        console.log('🚨🚨🚨 [RIDES] User ID:', req.user.id);
+        
         const userId = req.user.id;
         
         const sampleRides = [
