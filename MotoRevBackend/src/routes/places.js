@@ -150,6 +150,11 @@ router.get('/:id', async (req, res) => {
 // Submit a new place (requires authentication)
 router.post('/', authenticateToken, async (req, res) => {
     try {
+        console.log('🔵 Places POST: Request received');
+        console.log('🔵 Places POST: Headers:', req.headers);
+        console.log('🔵 Places POST: Body:', req.body);
+        console.log('🔵 Places POST: User:', req.user);
+        
         const {
             name,
             description,
@@ -167,6 +172,7 @@ router.post('/', authenticateToken, async (req, res) => {
         } = req.body;
         
         const userId = req.user.id;
+        console.log('🔵 Places POST: User ID:', userId);
         
         // Validate required fields
         if (!name || !category || !latitude || !longitude) {
@@ -203,6 +209,8 @@ router.post('/', authenticateToken, async (req, res) => {
             false // featured default
         ]);
         
+        console.log('✅ Places POST: Insert successful!', result);
+        
         res.status(201).json({
             success: true,
             message: 'Place submitted successfully and is pending approval',
@@ -210,8 +218,13 @@ router.post('/', authenticateToken, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error submitting place:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('❌ Places POST: Submit place error:', error);
+        console.error('❌ Places POST: Error details:', error.message);
+        console.error('❌ Places POST: Error stack:', error.stack);
+        res.status(500).json({ 
+            error: 'Internal server error',
+            details: error.message
+        });
     }
 });
 
