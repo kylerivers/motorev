@@ -132,11 +132,11 @@ app.get('/setup-places-tables', async (req, res) => {
     
     console.log('🔧 Creating places tables...');
     
-    // Create places table
+    // Create places table (without foreign keys first)
     await query(`
       CREATE TABLE IF NOT EXISTS places (
-        id BIGINT AUTO_INCREMENT PRIMARY KEY,
-        submitted_by BIGINT NOT NULL,
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        submitted_by BIGINT UNSIGNED NOT NULL,
         name VARCHAR(255) NOT NULL,
         description TEXT,
         category ENUM('restaurant', 'gas_station', 'scenic_viewpoint', 'motorcycle_shop', 'lodging', 'parking', 'other') NOT NULL,
@@ -152,15 +152,13 @@ app.get('/setup-places-tables', async (req, res) => {
         review_count INT DEFAULT 0,
         status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
         approval_notes TEXT,
-        approved_by BIGINT NULL,
+        approved_by BIGINT UNSIGNED NULL,
         approved_at TIMESTAMP NULL,
         featured BOOLEAN DEFAULT FALSE,
         tags JSON,
         submission_notes TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (submitted_by) REFERENCES users(id) ON DELETE CASCADE,
-        FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL,
         INDEX idx_category (category),
         INDEX idx_status (status),
         INDEX idx_location (latitude, longitude),
@@ -172,12 +170,10 @@ app.get('/setup-places-tables', async (req, res) => {
     // Create place_favorites table
     await query(`
       CREATE TABLE IF NOT EXISTS place_favorites (
-        id BIGINT AUTO_INCREMENT PRIMARY KEY,
-        user_id BIGINT NOT NULL,
-        place_id BIGINT NOT NULL,
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        user_id BIGINT UNSIGNED NOT NULL,
+        place_id BIGINT UNSIGNED NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-        FOREIGN KEY (place_id) REFERENCES places(id) ON DELETE CASCADE,
         UNIQUE KEY unique_favorite (user_id, place_id),
         INDEX idx_user_favorites (user_id),
         INDEX idx_place_favorites (place_id)
@@ -187,17 +183,15 @@ app.get('/setup-places-tables', async (req, res) => {
     // Create place_reviews table
     await query(`
       CREATE TABLE IF NOT EXISTS place_reviews (
-        id BIGINT AUTO_INCREMENT PRIMARY KEY,
-        place_id BIGINT NOT NULL,
-        user_id BIGINT NOT NULL,
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        place_id BIGINT UNSIGNED NOT NULL,
+        user_id BIGINT UNSIGNED NOT NULL,
         rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
         review_text TEXT,
         images JSON,
         helpful_count INT DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (place_id) REFERENCES places(id) ON DELETE CASCADE,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
         UNIQUE KEY unique_review (place_id, user_id),
         INDEX idx_place_reviews (place_id),
         INDEX idx_user_reviews (user_id),
@@ -208,16 +202,14 @@ app.get('/setup-places-tables', async (req, res) => {
     // Create place_checkins table
     await query(`
       CREATE TABLE IF NOT EXISTS place_checkins (
-        id BIGINT AUTO_INCREMENT PRIMARY KEY,
-        place_id BIGINT NOT NULL,
-        user_id BIGINT NOT NULL,
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        place_id BIGINT UNSIGNED NOT NULL,
+        user_id BIGINT UNSIGNED NOT NULL,
         latitude DECIMAL(10, 8) NOT NULL,
         longitude DECIMAL(11, 8) NOT NULL,
         notes TEXT,
         photos JSON,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (place_id) REFERENCES places(id) ON DELETE CASCADE,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
         INDEX idx_place_checkins (place_id),
         INDEX idx_user_checkins (user_id),
         INDEX idx_checkin_location (latitude, longitude)
