@@ -1136,8 +1136,25 @@ extension NetworkManager {
     }
     
     func getCompletedRides() -> AnyPublisher<CompletedRidesResponse, Error> {
+        print("🚨🚨🚨 [NetworkManager] getCompletedRides() called")
         let url = URL(string: "\(baseURL)/rides/completed")!
+        print("🚨🚨🚨 [NetworkManager] URL: \(url)")
         return makeAuthenticatedRequest(url: url, method: "GET", body: EmptyBody())
+    }
+    
+    func addTestRideData() -> AnyPublisher<TestDataResponse, Error> {
+        print("🚨🚨🚨 [NetworkManager] addTestRideData() called")
+        let url = URL(string: "\(baseURL)/rides/test-data")!
+        print("🚨🚨🚨 [NetworkManager] URL: \(url)")
+        return makeAuthenticatedRequest(url: url, method: "POST", body: EmptyBody())
+    }
+    
+    func saveCompletedRide(_ requestBody: SaveCompletedRideRequest) -> AnyPublisher<MessageResponse, Error> {
+        print("🚨🚨🚨 [NetworkManager] saveCompletedRide() called")
+        let url = URL(string: "\(baseURL)/rides/completed")!
+        print("🚨🚨🚨 [NetworkManager] URL: \(url)")
+        print("🚨🚨🚨 [NetworkManager] Request body: \(requestBody)")
+        return makeAuthenticatedRequest(url: url, method: "POST", body: requestBody)
     }
 }
 

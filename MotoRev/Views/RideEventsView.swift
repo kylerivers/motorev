@@ -186,6 +186,12 @@ struct RideEventsView: View {
                     Text("Start your first ride to see it here!")
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
+                    
+                    Button("Add Test Ride Data") {
+                        addTestRideData()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .padding(.top)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -401,6 +407,29 @@ struct RideEventsView: View {
                     print("✅ Successfully loaded \(response.rides.count) completed rides")
                     self.completedRides = response.rides
                     self.isLoadingRides = false
+                }
+            })
+            .store(in: &cancellables)
+    }
+    
+    private func addTestRideData() {
+        print("🔄 Adding test ride data...")
+        
+        networkManager.addTestRideData()
+            .sink(receiveCompletion: { completion in
+                DispatchQueue.main.async {
+                    switch completion {
+                    case .finished:
+                        break
+                    case .failure(let error):
+                        print("❌ Failed to add test ride data: \(error)")
+                    }
+                }
+            }, receiveValue: { response in
+                DispatchQueue.main.async {
+                    print("✅ Successfully added test ride data: \(response.message)")
+                    // Reload rides after adding test data
+                    self.loadCompletedRides()
                 }
             })
             .store(in: &cancellables)

@@ -1928,3 +1928,30 @@ struct RideParticipant: Identifiable, Codable {
 struct CompletedRidesResponse: Codable {
     let rides: [CompletedRideData]
 }
+
+struct TestDataResponse: Codable {
+    let success: Bool
+    let message: String
+    let rides: Int
+}
+
+struct SaveCompletedRideParticipant: Codable {
+    let id: String
+    let username: String
+    let name: String
+    let isCurrentUser: Bool
+}
+
+struct SaveCompletedRideRequest: Codable {
+    let rideId: String
+    let rideType: String
+    let startTime: String
+    let endTime: String
+    let duration: Double
+    let distance: Double
+    let averageSpeed: Double
+    let maxSpeed: Double
+    let route: [[String: Double]]
+    let participants: [SaveCompletedRideParticipant]
+    let safetyScore: Int
+}

@@ -1,3 +1,8 @@
+---
+description: Rule for MotoRev
+globs:
+alwaysApply: true
+---
 You are a senior software developer, building an iOS app called MotoRev — the “must-have” everything app for motorcycle riders. This app is more than just a tool; it’s a complete social platform with safety, community, maintenance, and ride sharing features, designed for thousands (and eventually millions) of riders worldwide. The end goal is a rock-solid, scalable, bug-free product where every single feature works across all screens, stays after refresh, and updates live for every user.
 Throughout development, you will be adding new features, refining existing ones, and fixing bugs, and it is critical that all work follows these strict guidelines to prevent compilation errors, maintain cross-feature consistency, and ensure long-term scalability.
 CRITICAL COMPILATION ERROR PREVENTION CHECKLIST

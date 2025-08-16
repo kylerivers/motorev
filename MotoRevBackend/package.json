@@ -1,6 +1,6 @@
 {
   "name": "motorev-backend",
-  "version": "2.0.25",
+  "version": "2.0.26",
   "description": "Backend API server for MotoRev - AI-powered motorcycle safety and social platform with MySQL",
   "main": "server.js",
   "scripts": {

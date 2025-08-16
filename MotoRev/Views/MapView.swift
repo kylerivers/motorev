@@ -1,6 +1,7 @@
 import SwiftUI
 import MapKit
 import CoreLocation
+import Combine
 
 struct MapView: View {
     @EnvironmentObject var locationManager: LocationManager
@@ -2559,6 +2560,7 @@ struct RideCompletionView: View {
     @EnvironmentObject var networkManager: NetworkManager
     @State private var isSaving = false
     @State private var showingShareSheet = false
+    @State private var cancellables = Set<AnyCancellable>()
     
     var body: some View {
         NavigationView {
@@ -2733,29 +2735,46 @@ struct RideCompletionView: View {
     private func saveRideToBackend() {
         isSaving = true
         
-        // Prepare ride data for backend
-        let rideDataForBackend: [String: Any] = [
-            "rideId": rideData.id,
-            "rideType": rideData.rideType.rawValue,
-            "startTime": ISO8601DateFormatter().string(from: rideData.startTime),
-            "endTime": ISO8601DateFormatter().string(from: rideData.endTime),
-            "duration": rideData.duration,
-            "distance": rideData.distance,
-            "averageSpeed": rideData.averageSpeed,
-            "maxSpeed": rideData.maxSpeed,
-            "route": rideData.route.map { ["lat": $0.coordinate.latitude, "lng": $0.coordinate.longitude] },
-            "participants": rideData.participants.map { ["id": $0.id, "username": $0.username, "name": $0.name, "isCurrentUser": $0.isCurrentUser] },
-            "safetyScore": rideData.safetyScore
-        ]
+        // Prepare ride data for backend using proper Codable models
+        let request = SaveCompletedRideRequest(
+            rideId: rideData.id,
+            rideType: rideData.rideType.rawValue,
+            startTime: ISO8601DateFormatter().string(from: rideData.startTime),
+            endTime: ISO8601DateFormatter().string(from: rideData.endTime),
+            duration: rideData.duration,
+            distance: rideData.distance,
+            averageSpeed: rideData.averageSpeed,
+            maxSpeed: rideData.maxSpeed,
+            route: rideData.route.map { ["lat": $0.coordinate.latitude, "lng": $0.coordinate.longitude] },
+            participants: rideData.participants.map { 
+                SaveCompletedRideParticipant(
+                    id: $0.id, 
+                    username: $0.username, 
+                    name: $0.name, 
+                    isCurrentUser: $0.isCurrentUser
+                ) 
+            },
+            safetyScore: rideData.safetyScore
+        )
         
-        // Save ride to backend
+        // Save ride to backend using NetworkManager
         print("🔄 Saving ride to backend: \(rideData.id)")
         print("📊 Ride data: \(rideData.distanceInMiles) miles, \(rideData.formattedDuration), safety: \(rideData.safetyScore)")
         
-        makeAuthenticatedRequest(endpoint: "/api/rides/completed", method: "POST", body: rideDataForBackend) { (result: Result<MessageResponse, Error>) in
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let response):
+        networkManager.saveCompletedRide(request)
+            .sink(receiveCompletion: { completion in
+                DispatchQueue.main.async {
+                    switch completion {
+                    case .finished:
+                        break
+                    case .failure(let error):
+                        print("❌ Failed to save ride to backend: \(error)")
+                        print("❌ Error details: \(error.localizedDescription)")
+                        self.isSaving = false
+                    }
+                }
+            }, receiveValue: { response in
+                DispatchQueue.main.async {
                     print("✅ Ride saved to backend successfully: \(response.message ?? "No message")")
                     
                     // Create social post
@@ -2771,67 +2790,10 @@ struct RideCompletionView: View {
                         )
                     )
                     
-                case .failure(let error):
-                    print("❌ Failed to save ride to backend: \(error)")
-                    print("❌ Error details: \(error.localizedDescription)")
+                    self.isSaving = false
                 }
-                
-                self.isSaving = false
-            }
-        }
-    }
-    
-    // Add the same makeAuthenticatedRequest extension as other views
-    private func makeAuthenticatedRequest<U: Codable>(
-        endpoint: String,
-        method: String,
-        body: [String: Any],
-        completion: @escaping (Result<U, Error>) -> Void
-    ) where U: Sendable {
-        // Build URL from NetworkManager baseURL, avoiding duplicate "/api"
-        let base = NetworkManager.shared.baseURL // e.g. https://.../api
-        let trimmedEndpoint = endpoint.hasPrefix("/api/") ? String(endpoint.dropFirst(5)) : endpoint.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        let urlString = base.hasSuffix("/") ? base + trimmedEndpoint : base + "/" + trimmedEndpoint
-        guard let url = URL(string: urlString) else {
-            completion(.failure(NetworkError.invalidURL))
-            return
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = method
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        // Add auth token
-        if let token = UserDefaults.standard.string(forKey: "auth_token") {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
-        
-        // Add body
-        do {
-            request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
-        } catch {
-            completion(.failure(error))
-            return
-        }
-        
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            if let error = error {
-                completion(.failure(error))
-                return
-            }
-            
-            guard let data = data else {
-                completion(.failure(NetworkError.noData))
-                return
-            }
-            
-            do {
-                let result = try JSONDecoder().decode(U.self, from: data)
-                completion(.success(result))
-            } catch {
-                completion(.failure(error))
-            }
-        }.resume()
+            })
+            .store(in: &cancellables)
     }
 }
 

@@ -128,7 +128,7 @@ struct AdminPanelView: View {
                 }
                 
                 // Loading indicator at bottom
-                if hasMoreUsers && search.isEmpty {
+                if isLoadingMoreUsers {
                     HStack {
                         Spacer()
                         ProgressView("Loading more users...")
@@ -137,9 +137,6 @@ struct AdminPanelView: View {
                         Spacer()
                     }
                     .padding()
-                    .onAppear {
-                        loadMoreUsers()
-                    }
                 }
             }
             .refreshable {
