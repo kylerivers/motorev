@@ -186,8 +186,8 @@ router.post('/', authenticateToken, async (req, res) => {
             INSERT INTO places (
                 submitted_by, name, description, category, latitude, longitude,
                 address, phone, website, hours_of_operation, amenities, images,
-                tags, submission_notes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                tags, submission_notes, rating, review_count, status, featured
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
         
         const result = await query(insertQuery, [
@@ -196,7 +196,11 @@ router.post('/', authenticateToken, async (req, res) => {
             Array.isArray(amenities) ? amenities.join(',') : (amenities || ''),
             Array.isArray(images) ? images.join(',') : (images || ''),
             Array.isArray(tags) ? tags.join(',') : (tags || ''), 
-            submission_notes
+            submission_notes,
+            0.0, // rating default
+            0,   // review_count default  
+            'pending', // status default
+            false // featured default
         ]);
         
         res.status(201).json({
