@@ -572,7 +572,7 @@ struct MapView: View {
         // Add current user
         if let currentUser = socialManager.currentUser {
             participants.append(RideParticipant(
-                id: String(currentUser.id),
+                id: "\(currentUser.id)",
                 username: currentUser.username,
                 name: "\(currentUser.firstName ?? "") \(currentUser.lastName ?? "")".trimmingCharacters(in: .whitespaces),
                 isCurrentUser: true
