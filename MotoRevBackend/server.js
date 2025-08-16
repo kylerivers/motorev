@@ -104,39 +104,6 @@ app.get('/test-deploy', (req, res) => {
   });
 });
 
-// Emergency password reset for Kyle (no auth required)
-app.get('/reset-kyle-password', async (req, res) => {
-  try {
-    const { query } = require('./src/database/connection');
-    
-    console.log('🔄 Emergency: Resetting Kyle password...');
-    const preHashedPassword = '$2b$10$u5WvXwU0Ydk0EPtWiz5kO.Dew3dFX6HKhWTWB.nId/cb7OiM.nFfK';
-    
-    const updateResult = await query(
-      'UPDATE users SET password_hash = ?, updated_at = NOW() WHERE id = 1', 
-      [preHashedPassword]
-    );
-    
-    console.log('✅ Kyle password reset successful!');
-    
-    res.json({ 
-      message: '🎉 Kyle Rivers password reset successful!',
-      username: 'kylerivers', 
-      password: '47industries',
-      timestamp: new Date().toISOString(),
-      updateResult: updateResult,
-      note: 'Login with username: kylerivers and password: 47industries'
-    });
-    
-  } catch (error) {
-    console.error('❌ Emergency password reset error:', error);
-    res.status(500).json({ 
-      error: 'Password reset failed', 
-      details: error.message,
-      timestamp: new Date().toISOString()
-    });
-  }
-});
 
 // Root OK endpoint (some platforms probe '/')
 app.get('/', (req, res) => {
