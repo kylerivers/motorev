@@ -447,6 +447,20 @@ struct MapView: View {
                 RiderDetailView(rider: rider)
             }
             .sheet(isPresented: $showPaywall) { PaywallView() }
+            .onAppear {
+                // Listen for ride start notifications from RideHubView
+                NotificationCenter.default.addObserver(
+                    forName: NSNotification.Name("StartSoloRideFromHub"),
+                    object: nil,
+                    queue: .main
+                ) { _ in
+                    self.startSoloRide()
+                }
+            }
+            .onDisappear {
+                // Clean up notification observers
+                NotificationCenter.default.removeObserver(self, name: NSNotification.Name("StartSoloRideFromHub"), object: nil)
+            }
         }
     }
     

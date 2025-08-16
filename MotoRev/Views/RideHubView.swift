@@ -610,12 +610,15 @@ struct RideHubView: View {
     
     private func startSoloRide() {
         currentRideType = .solo
-        // Start ride tracking
-        locationManager.startRideTracking()
-        safetyManager.startRide()
         
-        // Navigate to map tab to show ride in progress
+        // Navigate to map tab first so MapView is loaded
         selectedTab = 1
+        
+        // Delay to ensure MapView is loaded, then start ride through MapView
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            // Post notification to MapView to start solo ride
+            NotificationCenter.default.post(name: NSNotification.Name("StartSoloRideFromHub"), object: nil)
+        }
         
         // Create social post about the ride
         socialManager.createPost(
